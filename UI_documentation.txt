@@ -4,11 +4,11 @@ Christopher Gemske
 
 Repository location:
 • UI: site/index.html
-• Server: serve.js (or server.js)
+• Server: zxcvb.js 
 
 1. Accessing the UI
 
-    Start your server (by running node serve.js or node server.js) on https://<HOST>:8081.
+    Start your server (by running: node zxcvb.js) on https://<HOST>:8081.
 
     Point your browser at https://<HOST>:8081/ to load the Gemske UI chat interface.
 
