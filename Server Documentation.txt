@@ -1,0 +1,184 @@
+## Server Documentation: `zxcvb.js`
+
+This document describes the setup, configuration, and API endpoints provided by the `zxcvb.js` server file.
+
+---
+
+### Table of Contents
+
+1. [Overview](#overview)
+2. [Prerequisites & Installation](#prerequisites--installation)
+3. [Configuration](#configuration)
+4. [Directory Structure](#directory-structure)
+5. [Server Initialization](#server-initialization)
+6. [Middleware](#middleware)
+7. [SSL Configuration](#ssl-configuration)
+8. [API Endpoints](#api-endpoints)
+
+   * [1. Verify Login](#1-verify-login)
+   * [2. RSS Proxy](#2-rss-proxy)
+   * [3. Fetch Ollama Models](#3-fetch-ollama-models)
+   * [4. Chat Proxy](#4-chat-proxy)
+   * [5. Save Chat](#5-save-chat)
+   * [6. List Chats](#6-list-chats)
+   * [7. Load Chat](#7-load-chat)
+   * [8. Audio Upload](#8-audio-upload)
+9. [Static File Serving](#static-file-serving)
+10. [Running the Server](#running-the-server)
+11. [Notes & Future Improvements](#notes--future-improvements)
+
+---
+
+### Overview
+
+`zxcvb.js` implements an HTTPS-backed Express server that:
+
+* Serves a static frontend (login page, chat UI).
+* Provides a simple in-memory authentication stub.
+* Proxies RSS feeds.
+* Integrates with a self‑hosted Ollama LLM API for model listing and chat functionality.
+* Manages chat persistence (save/load) via JSON files.
+* Handles audio file uploads (placeholder for processing).
+
+### Prerequisites & Installation
+
+1. **Node.js** (v14+ recommended)
+2. Clone or copy the project into your workspace.
+3. Install dependencies:
+
+   ```bash
+   npm install express axios rss-parser cors multer https fs path
+   ```
+
+### Configuration
+
+* **PORT**: `8081` (modifiable in the file)
+* **HOST**: `0.0.0.0` (bind address)
+* **OLLAMA\_URL**: URL of the Ollama REST API (default: `http://192.168.1.32:11434`)
+* **SSL Certificates**: Place your `server.key` and `server.cert` in `./ssl/`
+
+### Directory Structure
+
+```
+project-root/
+├─ ssl/                  # TLS key & cert
+│  ├─ server.key
+│  └─ server.cert
+├─ chats/                # JSON files saved by /api/save-chat
+├─ uploads/              # Multer destination for audio uploads
+├─ site/                 # Static chat UI files
+├─ index.html            # Login page
+└─ zxcvb.js              # Server code
+```
+
+> The `chats/` and `uploads/` directories are auto-created at startup if missing.
+
+### Server Initialization
+
+```js
+const app = express();
+const PORT = 8081;
+const HOST = '0.0.0.0';
+
+// HTTPS setup
+tlsOptions = { key, cert };
+https.createServer(tlsOptions, app)
+     .listen(PORT, HOST, () => {
+       console.log(`Server running at https://${HOST}:${PORT}`);
+     });
+```
+
+### Middleware
+
+* **CORS**: Enabled for all origins (`app.use(cors())`).
+* **Body Parsing**:
+
+  * JSON (`express.json()`)
+  * URL‑encoded form data (`express.urlencoded({ extended: true })`)
+
+### SSL Configuration
+
+```js
+const sslOptions = {
+  key: fs.readFileSync(path.join(__dirname, 'ssl/server.key')),
+  cert: fs.readFileSync(path.join(__dirname, 'ssl/server.cert'))
+};
+```
+
+### API Endpoints
+
+#### 1. Verify Login
+
+* **URL**: `POST /api/verify-login`
+* **Body**: `{ username: string, password: string }`
+* **Response**: `{ success: boolean }`
+* **Description**: Checks credentials against an in-memory `users` object. Replace with real auth in production.
+
+#### 2. RSS Proxy
+
+* **URL**: `POST /proxy-rss`
+* **Body**: `{ url: string }`
+* **Response**: `{ title: string, items: Array<RSSItem> }`
+* **Error**: `500` if fetching/parsing fails.
+
+#### 3. Fetch Ollama Models
+
+* **URL**: `GET /api/models`
+* **Response**: JSON array of model tags from Ollama (`/api/tags`).
+* **Error**: `500` on failure.
+
+#### 4. Chat Proxy
+
+* **URL**: `POST /api/chat`
+* **Body**: `{ model: string, messages: Array<{ role, content }> }`
+* **Response**: LLM response JSON from Ollama (`/api/chat`).
+* **Error**: `500` on failure.
+
+#### 5. Save Chat
+
+* **URL**: `POST /api/save-chat`
+* **Body**: `{ filename?: string, messages: Array }`
+* **Response**: `{ filename: string }`
+* **Description**: Stores `messages` as a prettified JSON file in `./chats`. Automatically appends `.json` if missing.
+
+#### 6. List Chats
+
+* **URL**: `GET /api/list-chats`
+* **Response**: `{ files: string[] }`
+* **Description**: Lists all `.json` files in `./chats`.
+
+#### 7. Load Chat
+
+* **URL**: `GET /api/load-chat/:file`
+* **Response**: `{ messages: Array }` or `404` if not found.
+
+#### 8. Audio Upload
+
+* **URL**: `POST /upload`
+* **Form Data**: Field name `audio` (single file)
+* **Middleware**: `multer` stores upload in `./uploads`
+* **Handler**: Placeholder for further processing (e.g., transcription).
+
+### Static File Serving
+
+* **Root**: Serves `index.html` and supporting assets from project root.
+* **Chat UI**: Mounted at `/site` from `./site` directory.
+
+### Running the Server
+
+```bash
+node zxcvb.js
+# or with nodemon:
+npx nodemon zxcvb.js
+```
+
+Then visit: `https://<HOST>:8081/`
+
+### Notes & Future Improvements
+
+* Replace in-memory `users` with a real authentication mechanism.
+* Implement streaming responses for `/api/chat` (set `stream: true`).
+* Fill in audio processing logic under `/upload`.
+* Add robust error handling, logging, and input validation.
+* Consider environment-based configuration (use `dotenv`).
+* Implement rate‑limiting and security headers for production readiness.
