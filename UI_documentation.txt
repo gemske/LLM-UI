@@ -10,7 +10,7 @@ Repository location:
 
     Start your server (by running: node zxcvb.js) on https://<HOST>:8081.
 
-    Point your browser at https://<HOST>:8081/ to load the Gemske UI chat interface.
+    Point your browser at https://<HOST>:8081/site/index.html to load the Gemske UI chat interface.
 
 2. Layout Overview
 
