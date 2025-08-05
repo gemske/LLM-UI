@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Business AI Consultant</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #000;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            touch-action: manipulation;
+            background-image: url('img/consult.png');
+            background-size: cover
+        }
+        .container {
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            padding: 10px;
+            font-size: 1em;
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #222;
+            color: #fff;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+        #businessOutput {
+            margin-top: 20px;
+            text-align: left;
+            max-width: 600px;
+            width: 100%;
+            max-height: 60vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            font-family: 'Roboto', 'Helvetica', sans-serif;
+            font-size: 1.1em;
+            line-height: 1.5;
+        }
+        .business-plan {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #222;
+            border-left: 4px solid #007BFF;
+        }
+        .business-plan pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+        }
+        .error {
+            color: #ff4d4d;
+        }
+        .loading {
+            color: #007BFF;
+        }
+        .photo img {
+            margin: 0 auto;
+            display: block;
+            width: 90%;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>Business AI Consultant</h1>
+        <form id="businessForm" onsubmit="event.preventDefault(); generateBusinessPlan();">
+            <input type="text" id="businessInput" name="idea" placeholder="Enter your business idea" required>
+            <br>
+            <button type="submit">Generate Business Plan</button>
+            <button type="button" id="printBusinessPlan" disabled>Print Business Plan</button>
+            <button type="button" id="downloadModelOutputs" disabled>Download Model Outputs</button>
+            <button type="button" id="saveResearch" disabled>Save Research</button>
+        </form>
+        <div id="businessOutput"></div>
+    </div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+
+        async function generateBusinessPlan() {
+            const idea = document.getElementById('businessInput').value.trim();
+            const outputDiv = document.getElementById('businessOutput');
+            const printButton = document.getElementById('printBusinessPlan');
+            const downloadButton = document.getElementById('downloadModelOutputs');
+            const saveResearchButton = document.getElementById('saveResearch');
+            if (!idea) {
+                outputDiv.innerHTML = '<span class="error">Please enter a business idea.</span>';
+                printButton.disabled = true;
+                downloadButton.disabled = true;
+                saveResearchButton.disabled = true;
+                return;
+            }
+
+            outputDiv.innerHTML = '<span class="loading">Processing your request... This may take a few minutes as multiple AI models analyze your idea.</span>';
+            printButton.disabled = true;
+            downloadButton.disabled = true;
+            saveResearchButton.disabled = true;
+
+            try {
+                const MODEL_CHAIN = [
+                    { model: "psychologist", task: "Analyze consumer psychology, motivations, and market appeal of the business idea." },
+                    { model: "gamemasterroleplaying", task: "Simulate user interactions and adoption challenges for this idea." },
+                    { model: "chiefcustomersuccessofficer", task: "Evaluate customer success strategies and retention approaches for this idea." },
+                    { model: "financialadvisor", task: "Assess financial viability, startup costs, revenue projections, and funding strategies." },
+                    { model: "pythoncoderv2", task: "Draft a possible MVP or tech implementation strategy." },
+                    { model: "cyberaisecurity", task: "Identify potential cybersecurity concerns or data privacy implications." },
+                    { model: "projectmanager", task: "Propose a high-level project roadmap with phases and priorities." },
+                    { model: "computerhardwareengineer", task: "Determine any hardware considerations and feasibility (skip if none)." },
+                    { model: "businessadministrator", task: "Outline the business structure, roles, operations, and key workflows." },
+                    { model: "attorney2", task: "Discuss legal structure, IP concerns, compliance, and liability mitigation." },
+                    { model: "chiefaiofficer", task: "Provide high-level strategy for AI integration, scalability, and competitive edge. Note: if you determine AI is not needed for the business at this time but outline future integration." },
+                ];
+
+                const FINAL_OUTPUT_ROLES = {
+                    contentsummarizer1: "Give a brief statement introducing the board comprised of chiefcustomerofficer, financialadvisor, businessadministrator, attorney2, chiefaiofficer",
+                    chiefcustomersuccessofficer: "Summarize the target market and the psychology of the potential consumer based on the transcript of all summaries from the model chain.",
+                    financialadvisor: "Summarize the financial aspects, including budget, revenue model, projections, and liabilities of the business proposal based on the transcript of all summaries from the model chain. Operate in USD currency",
+                    businessadministrator: "Summarize the operational structure and how this can run efficiently based on the transcript of all summaries from the model chain.",
+                    attorney2: "Summarize legal safeguards, liabilities, and protections for this business based on the transcript of all summaries from the model chain.",
+                    chiefaiofficer: "Summarize the long-term AI integration, risks, and opportunities based on the transcript of all summaries from the model chain.",
+                };
+
+                // Initialize localStorage for summaries and raw outputs
+                localStorage.removeItem('businessPlanSummaries');
+                localStorage.removeItem('businessPlanRawOutputs');
+                let summaries = [];
+                let rawOutputs = [];
+
+                for (const { model, task } of MODEL_CHAIN) {
+                    // Step 1: Process model task with only the initial idea
+                    const prompt = `Business idea: ${idea}\n\n${task}`;
+                    const response = await fetch('http://192.168.1.32:8081/api/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            model: `ALIENTELLIGENCE/${model}:latest`,
+                            messages: [{ role: 'user', content: prompt }]
+                        })
+                    });
+                    if (!response.ok) throw new Error(`Failed to fetch from ${model}: ${response.status}`);
+                    const data = await response.json();
+                    rawOutputs.push({ model, output: data.message.content });
+
+                    // Step 2: Generate summary for this model's output
+                    const summaryPrompt = `Summarize the following output in concise bullet points (max 5 points, each under 30 words):\n${data.message.content}`;
+                    const summaryResponse = await fetch('http://192.168.1.32:8081/api/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            model: `ALIENTELLIGENCE/contentsummarizer1:latest`,
+                            messages: [{ role: 'user', content: summaryPrompt }]
+                        })
+                    });
+                    if (!summaryResponse.ok) throw new Error(`Failed to fetch from contentsummarizer1: ${summaryResponse.status}`);
+                    const summaryData = await summaryResponse.json();
+                    summaries.push({ model, summary: summaryData.message.content });
+                    rawOutputs.push({ model: `contentsummarizer1 (${model})`, output: summaryData.message.content });
+                    localStorage.setItem('businessPlanSummaries', JSON.stringify(summaries));
+                }
+
+                // Store raw outputs for download
+                localStorage.setItem('businessPlanRawOutputs', JSON.stringify(rawOutputs));
+
+                // Concatenate all summaries verbatim for final output roles
+                const transcriptOfSummaries = summaries.map(s => `[${s.model} Summary]:\n${s.summary}`).join('\n\n');
+
+                // Process final output roles with the transcript
+                let combinedOutput = '';
+                for (const [role, summaryPrompt] of Object.entries(FINAL_OUTPUT_ROLES)) {
+                    const prompt = `Transcript of summaries from all 11 models:\n${transcriptOfSummaries}\n\n${summaryPrompt}`;
+                    const response = await fetch('http://192.168.1.32:8081/api/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            model: `ALIENTELLIGENCE/${role}:latest`,
+                            messages: [{ role: 'user', content: prompt }]
+                        })
+                    });
+                    if (!response.ok) throw new Error(`Failed to fetch from ${role}: ${response.status}`);
+                    const data = await response.json();
+                    combinedOutput += `\n\n[${role}]: ${data.message.content}`;
+                }
+
+                // Append the transcript of summaries as the final report
+                combinedOutput += `\n\n[Transcript of All Summaries]:\n${transcriptOfSummaries}`;
+
+                outputDiv.innerHTML = `<div class="business-plan"><pre>${combinedOutput.trim()}</pre></div>`;
+                printButton.disabled = false;
+                downloadButton.disabled = false;
+                saveResearchButton.disabled = false;
+            } catch (error) {
+                console.error('Error generating business plan:', error);
+                outputDiv.innerHTML = `<span class="error">Error: ${error.message}. Please ensure the server is running at http://192.168.1.32:8081/api/chat.</span>`;
+                printButton.disabled = true;
+                downloadButton.disabled = true;
+                saveResearchButton.disabled = true;
+            }
+        }
+
+        function printBusinessPlan() {
+            const outputDiv = document.getElementById('businessOutput');
+            const idea = document.getElementById('businessInput').value.trim() || 'Business Plan';
+            if (!outputDiv.innerText.trim()) {
+                alert('No business plan content to print.');
+                return;
+            }
+
+            const doc = new jsPDF();
+            doc.setFontSize(12);
+            doc.text('Business AI Consultant', 10, 10);
+            doc.text(`Business Idea: ${idea}`, 10, 20);
+
+            const text = outputDiv.innerText;
+            const lines = doc.splitTextToSize(text, 190);
+            let y = 30;
+            lines.forEach(line => {
+                if (y > 280) {
+                    doc.addPage();
+                    y = 10;
+                }
+                doc.text(line, 10, y);
+                y += 7;
+            });
+
+            doc.save(`business_plan_${new Date().toISOString().replace(/[:.]/g, '-')}.pdf`);
+        }
+
+        function downloadModelOutputs() {
+            const rawOutputs = JSON.parse(localStorage.getItem('businessPlanRawOutputs') || '[]');
+            const idea = document.getElementById('businessInput').value.trim() || 'Business Plan';
+            if (!rawOutputs.length) {
+                alert('No model outputs available to download.');
+                return;
+            }
+
+            const content = `Business Idea: ${idea}\n\nModel Chain Outputs:\n${rawOutputs.map(o => `\n[${o.model}]:\n${o.output}`).join('\n\n')}`;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `model_outputs_${new Date().toISOString().replace(/[:.]/g, '-')}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function saveResearch() {
+            const summaries = JSON.parse(localStorage.getItem('businessPlanSummaries') || '[]');
+            const idea = document.getElementById('businessInput').value.trim() || 'Business Plan';
+            if (!summaries.length) {
+                alert('No research summaries available to download.');
+                return;
+            }
+
+            const content = `Business Idea: ${idea}\n\nResearch Summaries:\n${summaries.map(s => `\n[${s.model} Summary]:\n${s.summary}`).join('\n\n')}`;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `research_summaries_${new Date().toISOString().replace(/[:.]/g, '-')}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        document.getElementById('printBusinessPlan').addEventListener('click', printBusinessPlan);
+        document.getElementById('downloadModelOutputs').addEventListener('click', downloadModelOutputs);
+        document.getElementById('saveResearch').addEventListener('click', saveResearch);
+    </script>
+</body>
+</html>

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Debate</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background-color: #1e1e1e;
+      color: #eee;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    header {
+      background-color: #111;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #00ffcc;
+    }
+
+    main {
+      flex: 1;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      overflow-y: auto;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      background-color: #111;
+      padding: 1rem;
+      border-radius: 8px;
+    }
+
+    input[type="text"],
+    select {
+      padding: 0.75rem;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: 1px solid #333;
+      background-color: #2b2b2b;
+      color: #fff;
+    }
+
+    button {
+      padding: 0.75rem;
+      background-color: #00b894;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #00a383;
+    }
+
+    .chat {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .message {
+      padding: 1rem;
+      border-radius: 10px;
+      max-width: 90%;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+
+    .moderator {
+      background-color: #2a2a2a;
+      border-left: 4px solid #00bfff;
+      align-self: flex-start;
+    }
+
+    .debater1 {
+      background-color: #2e3b2f;
+      border-left: 4px solid #28a745;
+      align-self: flex-start;
+    }
+
+    .debater2 {
+      background-color: #3b2e2e;
+      border-left: 4px solid #dc3545;
+      align-self: flex-end;
+    }
+
+    .winner {
+      border-left-color: gold;
+    }
+
+    .row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    @media (min-width: 600px) {
+      .row {
+        flex-direction: row;
+        gap: 1rem;
+      }
+
+      input[type="text"], select {
+        flex: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>AI Debate Platform</header>
+
+  <main>
+    <form onsubmit="event.preventDefault(); startDebate();">
+      <div class="row">
+        <input id="topicInput" type="text" placeholder="Enter debate topic..." required />
+      </div>
+      <div class="row">
+        <select id="moderatorModel"></select>
+        <select id="debate1Model"></select>
+        <select id="debate2Model"></select>
+      </div>
+      <button type="submit">Start Debate</button>
+      <button type="button" onclick="printDebate()">Print Debate</button>
+    </form>
+
+    <section id="debateOutput" class="chat"></section>
+  </main>
+
+  <script>
+    const { jsPDF } = window.jspdf;
+
+    async function callChat(model, messages) {
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model, messages })
+        });
+        const data = await res.json();
+        return data.message.content;
+      } catch (e) {
+        console.error(e);
+        return `Error: ${e.message}`;
+      }
+    }
+
+    function addMessage(content, role, extra = '') {
+      const div = document.createElement('div');
+      div.className = `message ${role} ${extra}`;
+      div.textContent = content;
+      document.getElementById('debateOutput').appendChild(div);
+    }
+
+    async function saveChatHistory(messages) {
+      try {
+        await fetch('/api/save-chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages })
+        });
+      } catch (err) {
+        console.error('Save failed:', err.message);
+      }
+    }
+
+    async function startDebate() {
+      const topic = document.getElementById('topicInput').value.trim();
+      const moderatorModel = document.getElementById('moderatorModel').value;
+      const debate1Model = document.getElementById('debate1Model').value;
+      const debate2Model = document.getElementById('debate2Model').value;
+
+      if (!topic || !moderatorModel || !debate1Model || !debate2Model) return;
+
+      const output = document.getElementById('debateOutput');
+      output.innerHTML = '';
+      const chatHistory = [];
+
+      const push = (role, content) => {
+        chatHistory.push({ role, content });
+        addMessage(content, role);
+      };
+
+      const introPrompt = {
+        role: 'user',
+        content: `You are the debate moderator. Introduce the topic: "${topic}". Debater 1 is FOR it. Debater 2 is AGAINST. If it is unclear on the sides, do your best to make it dualistic. Do not provide arguments for or against the topic in this intro, just state which side each debater is on. Begin.`
+      };
+      const intro = await callChat(moderatorModel, [introPrompt]);
+      push('moderator', intro);
+
+      const d1r1Prompt = {
+        role: 'user',
+        content: `You are Debater 1. Argue in favor of: "${topic}".`
+      };
+      const d1r1 = await callChat(debate1Model, [d1r1Prompt]);
+      push('debater1', d1r1);
+
+      const d2r1Prompt = {
+        role: 'user',
+        content: `You are Debater 2. Argue against: "${topic}". Respond to: "${d1r1}".`
+      };
+      const d2r1 = await callChat(debate2Model, [d2r1Prompt]);
+      push('debater2', d2r1);
+
+      const d1r2Prompt = {
+        role: 'user',
+        content: `You are Debater 1. Rebut Debater 2's argument: "${d2r1}". Reinforce your FOR stance.`
+      };
+      const d1r2 = await callChat(debate1Model, [d1r2Prompt]);
+      push('debater1', d1r2);
+
+      const d2r2Prompt = {
+        role: 'user',
+        content: `You are Debater 2. Rebut Debater 1's rebuttal: "${d1r2}". Reinforce your AGAINST stance.`
+      };
+      const d2r2 = await callChat(debate2Model, [d2r2Prompt]);
+      push('debater2', d2r2);
+
+      const finalPrompt = {
+        role: 'user',
+        content: `You are the moderator. Choose the debate winner on "${topic}":\n        Debater 1: "${d1r1}", "${d1r2}"\n        Debater 2: "${d2r1}", "${d2r2}"\n        Justify your answer.`
+      };
+      const final = await callChat(moderatorModel, [finalPrompt]);
+      push('moderator', final);
+      document.querySelector('.message:last-child').classList.add('winner');
+
+      await saveChatHistory(chatHistory);
+    }
+
+    function printDebate() {
+      const topic = document.getElementById('topicInput').value || 'Debate';
+      const lines = Array.from(document.querySelectorAll('.message')).map(div => div.textContent);
+
+      const doc = new jsPDF();
+      doc.setFontSize(12);
+      doc.text(`AI Debate on: ${topic}`, 10, 10);
+
+      let y = 20;
+      lines.forEach(line => {
+        const wrapped = doc.splitTextToSize(line, 180);
+        wrapped.forEach(l => {
+          if (y > 280) {
+            doc.addPage();
+            y = 10;
+          }
+          doc.text(l, 10, y);
+          y += 7;
+        });
+      });
+
+      doc.save(`debate_${topic.replace(/\s+/g, '_')}.pdf`);
+    }
+
+    async function loadModelsIntoDropdowns() {
+      try {
+        const res = await fetch('/api/models');
+        const data = await res.json();
+        const models = (data.models || data.tags || []).map(m => m.name || m);
+
+        const defaultModels = {
+          moderatorModel: 'moderator:latest',
+          debate1Model: 'debate1:latest',
+          debate2Model: 'debate2:latest'
+        };
+
+        const selects = [
+          { id: 'moderatorModel', label: 'Choose moderator model' },
+          { id: 'debate1Model', label: 'Choose debater 1 model' },
+          { id: 'debate2Model', label: 'Choose debater 2 model' }
+        ];
+
+        selects.forEach(({ id, label }) => {
+          const select = document.getElementById(id);
+          select.innerHTML = '';
+
+          const placeholder = document.createElement('option');
+          placeholder.disabled = true;
+          placeholder.textContent = label;
+          select.appendChild(placeholder);
+
+          models.forEach(model => {
+            const opt = document.createElement('option');
+            opt.value = model;
+            opt.textContent = model;
+            if (model === defaultModels[id]) {
+              opt.selected = true;
+            }
+            select.appendChild(opt);
+          });
+        });
+      } catch (err) {
+        console.error('Failed to load models:', err.message);
+      }
+    }
+
+    window.onload = loadModelsIntoDropdowns;
+  </script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Dungeon Master</title>
+  <style>
+    body {
+      font-family: Verdana, sans-serif;
+      margin: 20px;
+      background-color: #1c2526;
+      color: #ffffff;
+      text-align: left;
+    }
+    #chat-history {
+      border: 1px solid #4a5b5e;
+      padding: 10px;
+      height: 60vh;
+      overflow-y: scroll;
+      background-color: #2e3b3e;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    .message { margin: 5px 0; padding: 10px; border-radius: 5px; }
+    .user { background-color: #3a5f8a; }
+    .assistant { background-color: #4a4a4a; }
+    #message-input {
+      padding: 10px;
+      background-color: #333;
+      color: #fff;
+      border: 1px solid #555;
+      width: 100%;
+    }
+    .button {
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+    }
+    .button:hover { background-color: #4a7ab5; }
+    h1 { text-align: center; }
+    #input-form, #button-container { margin-top: 10px; }
+    #send-button { background-color: #28a745; }
+    #send-button:hover { background-color: #218838; }
+    #clear-button { background-color: #dc3545; }
+    #clear-button:hover { background-color: #c82333; }
+
+
+  </style>
+</head>
+<body>
+  <h1>🧙 AI Dungeon Master</h1>
+  <div id="chat-container">
+    <div id="chat-history"></div>
+    <div id="input-form">
+      <input type="text" id="message-input" placeholder="Speak to the Dungeon Master...">
+    </div>
+    <div id="button-container">
+      <button class="button" id="send-button" onclick="sendMessage()">Send</button>
+    </div>
+    <div id="button-container">
+      <button class="button" id="clear-button">Clear Adventure</button>
+    </div>
+    <div id="button-container">
+      <button class="button" onclick="saveChat()">Save Log</button>
+    </div>
+    <div id="button-container">
+      <button class="button" onclick="document.getElementById('load-file-input').click()">Load Log</button>
+      <input type="file" id="load-file-input" accept=".json" style="display: none;" onchange="loadChat(this.files[0])" />
+    </div>
+  </div>
+
+  <script>
+    let chatHistory = [
+      {
+        role: "system",
+        content: `You are a Dungeon Master guiding the user through a fantasy roleplaying game. Describe scenes vividly, offer choices, and react dramatically to player actions. Never break character. Begin by welcoming the player and asking them to create their character or say "begin" to dive in.`
+      }
+    ];
+    const defaultModel = "ALIENTELLIGENCE/gamemasterroleplaying:latest";
+
+    async function sendMessage() {
+      const messageInput = document.getElementById("message-input");
+      const message = messageInput.value.trim();
+      if (!message) return;
+
+      chatHistory.push({ role: "user", content: message });
+      updateChatDisplay();
+
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ model: defaultModel, messages: chatHistory })
+        });
+        const data = await response.json();
+        chatHistory.push({ role: "assistant", content: data.message.content });
+        updateChatDisplay();
+      } catch (err) {
+        console.error(err);
+        chatHistory.push({ role: "assistant", content: "⚠️ Error getting response." });
+        updateChatDisplay();
+      }
+
+      messageInput.value = "";
+    }
+
+    function updateChatDisplay() {
+      const chatDiv = document.getElementById("chat-history");
+      chatDiv.innerHTML = "";
+      chatHistory.forEach(msg => {
+        const msgDiv = document.createElement("div");
+        msgDiv.className = `message ${msg.role}`;
+        msgDiv.innerHTML = msg.content.replace(/\n/g, "<br>");
+        chatDiv.appendChild(msgDiv);
+      });
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+    }
+
+    function saveChat() {
+      const blob = new Blob([JSON.stringify(chatHistory, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "dungeon_log.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function loadChat(file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          chatHistory = JSON.parse(e.target.result);
+          updateChatDisplay();
+        } catch (err) {
+          alert("Invalid file format.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    document.getElementById("clear-button").addEventListener("click", () => {
+      if (confirm("Reset the adventure?")) {
+        chatHistory = [chatHistory[0]]; // keep system prompt
+        updateChatDisplay();
+      }
+    });
+
+    document.getElementById("message-input").addEventListener("keydown", e => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Initialize first message
+    window.onload = () => {
+      updateChatDisplay();
+      chatHistory.push({ role: "assistant", content: "🧙 Welcome to the realm, adventurer! Please create your character or say 'begin' to start your journey." });
+      updateChatDisplay();
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Remembuddy</title>
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; font-family: system-ui, sans-serif; background-color: #1e1e1e; color: #eee; }
+    header { background-color: #111; padding: 1rem; text-align: center; font-size: 1.5rem; font-weight: bold; color: #00ffcc; }
+    main { display: flex; flex-direction: column; height: calc(100% - 64px); }
+    .chat-area { flex: 1; overflow-y: auto; padding: 1rem; }
+    .input-wrapper { border-top: 1px solid #333; background-color: #111; padding: 1rem; display: flex; gap: 0.5rem; align-items: center; }
+    select, textarea, button { font-size: 1rem; }
+    select { padding: 0.75rem; border-radius: 5px; border: 1px solid #333; background-color: #2b2b2b; color: #99cc99; }
+    textarea { flex: 1; padding: 0.75rem; border-radius: 5px; border: 1px solid #333; background-color: #2b2b2b; color: #99cc99; resize: vertical; min-height: 80px; }
+    button { padding: 0.75rem 1.5rem; border-radius: 5px; border: none; background-color: #006633; color: #e6e6e6; cursor: pointer; }
+    button:hover { background-color: #008844; }
+    .message { margin-bottom: 1rem; padding: 0.75rem 1rem; border-radius: 12px; max-width: 90%; clear: both; }
+    .user-message { background-color: #2c2c2e; color: #fff; align-self: flex-end; float: right; }
+    .ai-message { background-color: #3a3a3c; color: #fff; align-self: flex-start; float: left; }
+    .system-message { background: none; color: #888; text-align: center; margin: 1rem 0; }
+    @media (max-width: 768px) {
+      .input-wrapper { flex-direction: column; }
+      select, textarea, button { width: 100%; margin-bottom: 0.5rem; }
+      .message { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header>Remembuddy</header>
+  <main>
+    <div id="chatBox" class="chat-area"></div>
+    <div class="input-wrapper">
+      <select id="modelSelect"></select>
+      <textarea id="userInput" placeholder="Type your message..."></textarea>
+      <button id="sendButton">Send</button>
+    </div>
+  </main>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const chatBox = document.getElementById('chatBox');
+      const sendBtn = document.getElementById('sendButton');
+      const modelSelect = document.getElementById('modelSelect');
+      const inputArea = document.getElementById('userInput');
+      let chatHistory = [], memory = [];
+
+      function appendMessage(role, content) {
+        const w = document.createElement('div'),
+              cls = role==='You'?'user-message':role==='AI'?'ai-message':'system-message';
+        w.className = 'message '+cls;
+        if(role==='You'||role==='AI'){
+          const s=document.createElement('div');
+          s.className='sender';
+          s.textContent=role;
+          w.appendChild(s);
+        }
+        w.appendChild(document.createTextNode(content));
+        chatBox.appendChild(w);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+
+      async function loadModels(){
+        modelSelect.disabled=true;
+        const def='llama3:8b';
+        modelSelect.innerHTML='<option>Loading…</option>';
+        try {
+          const res=await fetch('/api/models');
+          const data=await res.json();
+          const arr=Array.isArray(data)?data:(Array.isArray(data.tags)?data.tags:[]);
+          modelSelect.innerHTML='';
+          modelSelect.append(new Option(def,def));
+          arr.forEach(m=>{ if(m!==def) modelSelect.append(new Option(m,m)); });
+          modelSelect.value=def;
+        } catch(e){ console.error(e); modelSelect.innerHTML=`<option>${def}</option>`; }
+        modelSelect.disabled=false;
+      }
+
+      async function loadMemory(){
+        try {
+          const res = await fetch('/api/memory');
+          memory = res.ok ? await res.json() : [];
+          appendMessage('System', `Memory loaded: ${memory.length}`);
+        } catch(e){
+          console.error(e);
+          appendMessage('System','Error loading memory.');
+        }
+      }
+
+      async function sendMessage(){
+        const text=inputArea.value.trim();
+        if(!text) return;
+
+        if(text.toLowerCase().includes('when did we last speak')){
+          const last=memory[memory.length-1];
+          appendMessage('System', last?`Last interaction at ${last.timestamp}`:`No previous interactions.`);
+          inputArea.value=''; return;
+        }
+
+        appendMessage('You', text);
+        chatHistory.push({role:'user',content:text});
+        inputArea.value='';
+
+        const payload={messages:[...memory.map(m=>({role:'system',content:`${m.timestamp}: ${m.summary}`})),...chatHistory],model:modelSelect.value};
+        try {
+          const chatRes=await fetch('/api/chat',{
+            method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify(payload)
+          });
+          if(!chatRes.ok){
+            const err=await chatRes.text();
+            appendMessage('System',`Chat error ${chatRes.status}: ${err}`);
+            return;
+          }
+          const {message:{content:aiMsg}}=await chatRes.json();
+          appendMessage('AI', aiMsg);
+          chatHistory.push({role:'assistant',content:aiMsg});
+
+          // summarize
+          let summary='';
+          try{
+            const sumRes=await fetch('/api/summarize',{
+              method:'POST',headers:{'Content-Type':'application/json'},
+              body:JSON.stringify({user:text,ai:aiMsg})
+            });
+            if(sumRes.ok) summary=(await sumRes.json()).summary||'';
+          }catch(e){console.error(e);}
+
+          const timestamp=new Date().toISOString();
+          memory.push({timestamp,summary});
+
+          // persist
+          await fetch('/api/memory',{
+            method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({timestamp,summary})
+          });
+
+        } catch(e){
+          console.error(e);
+          appendMessage('System','Network or server error.');
+        }
+      }
+
+      sendBtn.addEventListener('click',sendMessage);
+      inputArea.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.shiftKey){ e.preventDefault(); sendMessage(); }});
+
+      await loadModels();
+      await loadMemory();
+    });
+  </script>
+</body>
+</html>

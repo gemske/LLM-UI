@@ -1,0 +1,10 @@
+site/**/
+
+# Node.js dependencies
+node_modules/
+
+# Build outputs
+dist/
+
+# OS files
+.DS_Store

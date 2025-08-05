@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raw RSS Feed Display</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            flex: 1;
+        }
+        .feed-item {
+            border-bottom: 1px solid #495057;
+            padding: 15px 0;
+        }
+        .feed-item h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+        .feed-item p {
+            margin-bottom: 0.5rem;
+        }
+        .error {
+            color: #dc3545;
+        }
+        #rawFeedOutput {
+            width: 100%;
+            min-height: 150px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body data-bs-theme="dark">
+  <ul>
+    <li>News
+      <ul>
+        <li><a href="http://rss.cnn.com/rss/edition.rss" target="_blank">CNN Top Stories</a></li>
+        <li><a href="https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml" target="_blank">NYTimes Home Page</a></li>
+        <li><a href="https://feeds.reuters.com/reuters/topNews" target="_blank">Reuters Top News</a></li>
+        <li><a href="http://feeds.bbci.co.uk/news/world/rss.xml" target="_blank">BBC World News</a></li>
+      </ul>
+    </li>
+
+    <li>Technology
+      <ul>
+        <li><a href="http://feeds.feedburner.com/TechCrunch/" target="_blank">TechCrunch</a></li>
+        <li><a href="https://www.theverge.com/rss/frontpage" target="_blank">The Verge</a></li>
+        <li><a href="http://feeds.arstechnica.com/arstechnica/technology-lab" target="_blank">Ars Technica</a></li>
+        <li><a href="http://feeds.wired.com/wired/index" target="_blank">Wired</a></li>
+      </ul>
+    </li>
+
+    <li>Business & Finance
+      <ul>
+        <li><a href="https://feeds.reuters.com/reuters/businessNews" target="_blank">Reuters Business</a></li>
+        <li><a href="https://feeds.a.dj.com/rss/RSSWorldNews.xml" target="_blank">WSJ World News</a></li>
+        <li><a href="https://hbr.org/rss" target="_blank">Harvard Business Review</a></li>
+      </ul>
+    </li>
+
+    <li>Science & Environment
+      <ul>
+        <li><a href="http://feeds.nature.com/nature/rss/current" target="_blank">Nature</a></li>
+        <li><a href="http://www.livescience.com/home/feed/site.xml" target="_blank">LiveScience</a></li>
+        <li><a href="https://www.nasa.gov/rss/dyn/breaking_news.rss" target="_blank">NASA Breaking News</a></li>
+        <li><a href="http://www.popsci.com/rss.xml" target="_blank">PopSci</a></li>
+      </ul>
+    </li>
+
+    <li>Sports
+      <ul>
+        <li><a href="http://sports.espn.go.com/espn/rss/news" target="_blank">ESPN</a></li>
+        <li><a href="http://www.si.com/rss/si_topstories.rss" target="_blank">Sports Illustrated</a></li>
+        <li><a href="https://sports.yahoo.com/top/rss.xml" target="_blank">Yahoo Sports</a></li>
+        <li><a href="http://rss.nytimes.com/services/xml/rss/nyt/Sports.xml" target="_blank">NYTimes Sports</a></li>
+      </ul>
+    </li>
+
+    <li>Politics
+      <ul>
+        <li><a href="https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml" target="_blank">NYTimes Politics</a></li>
+        <li><a href="https://feeds.washingtonpost.com/rss/politics" target="_blank">Washington Post Politics</a></li>
+      </ul>
+    </li>
+
+    <li>Health & Lifestyle
+      <ul>
+        <li><a href="https://rss.nytimes.com/services/xml/rss/nyt/Health.xml" target="_blank">NYTimes Health</a></li>
+        <li><a href="http://rss.cnn.com/rss/cnn_health.rss" target="_blank">CNN Health</a></li>
+        <li><a href="https://www.apartmenttherapy.com/main.rss" target="_blank">Apartment Therapy</a></li>
+        <li><a href="https://feeds.feedburner.com/blogspot/cupofjo" target="_blank">Cup of Jo</a></li>
+      </ul>
+    </li>
+
+    <li>Entertainment & Culture
+      <ul>
+        <li><a href="http://rss.rollingstone.com/news.rss" target="_blank">Rolling Stone</a></li>
+        <li><a href="https://www.newyorker.com/feed/culture" target="_blank">New Yorker Culture</a></li>
+      </ul>
+    </li>
+
+    <li>Blogs & Indie Tech
+      <ul>
+        <li><a href="https://overreacted.io/rss.xml" target="_blank">Overreacted – Dan Abramov</a></li>
+        <li><a href="https://fs.blog/feed/" target="_blank">Farnam Street</a></li>
+        <li><a href="https://nesslabs.com/feed" target="_blank">Ness Labs</a></li>
+      </ul>
+    </li>
+
+    <li>AI & Machine Learning
+      <ul>
+        <li><a href="https://arxiv.org/list/cs.LG/recent" target="_blank">arXiv ML</a></li>
+        <li><a href="https://machinelearningmastery.com/feed/" target="_blank">Machine Learning Mastery</a></li>
+        <li><a href="https://www.aitrends.com/feed/" target="_blank">AI Trends</a></li>
+        <li><a href="https://bair.berkeley.edu/blog/feed.xml" target="_blank">Berkeley AI Research</a></li>
+      </ul>
+    </li>
+
+    <li>Cybersecurity & Threat Intel
+      <ul>
+        <li><a href="https://www.bitdefender.com/blog/api/rss/labs/" target="_blank">Bitdefender Labs</a></li>
+        <li><a href="https://blogs.cisco.com/security/feed" target="_blank">Cisco Security</a></li>
+        <li><a href="https://blog.talosintelligence.com/rss" target="_blank">Cisco Talos</a></li>
+        <li><a href="https://www.crowdstrike.com/blog/category/threat-intel-research/feed" target="_blank">CrowdStrike Threat Intel</a></li>
+      </ul>
+    </li>
+
+    <li>Webcomics
+      <ul>
+        <li><a href="https://www.smbc-comics.com/rss.php" target="_blank">SMBC</a></li>
+        <li><a href="https://theoatmeal.com/feed" target="_blank">The Oatmeal</a></li>
+      </ul>
+    </li>
+
+    <li>Good News
+      <ul>
+        <li><a href="https://positive.news/feed" target="_blank">Positive News</a></li>
+        <li><a href="https://goodnewsnetwork.org/feed" target="_blank">Good News Network</a></li>
+        <li><a href="https://optimistdaily.com/feed" target="_blank">Optimist Daily</a></li>
+      </ul>
+    </li>
+
+    <li>Developer & GitHub Feeds
+      <ul>
+        <li><a href="https://github.com/github.atom" target="_blank">GitHub User Feed</a></li>
+        <li><a href="https://github.com/openai/openai-python/releases.atom" target="_blank">OpenAI Python Releases</a></li>
+      </ul>
+    </li>
+
+    <li>Bonus: Awesome RSS Feed Collections
+      <ul>
+        <li><a href="https://github.com/plenaryapp/awesome-rss-feeds" target="_blank">Plenary – Awesome RSS Feeds</a></li>
+        <li><a href="https://github.com/vishalshar/awesome_ML_AI_RSS_feed" target="_blank">Awesome ML/AI Feeds</a></li>
+        <li><a href="https://github.com/thehappydinoa/awesome-threat-intel-rss" target="_blank">Awesome Threat Intel Feeds</a></li>
+        <li><a href="https://github.com/tuan3w/awesome-tech-rss" target="_blank">Awesome Tech/Startup Feeds</a></li>
+      </ul>
+    </li>
+  </ul>
+
+
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script>
+        async function loadFeed() {
+            const urlInput = document.getElementById('rssUrl').value;
+            const feedOutput = document.getElementById('feedOutput');
+            const rawFeedOutput = document.getElementById('rawFeedOutput');
+            const copyRawButton = document.getElementById('copyRawButton');
+
+            if (!urlInput) {
+                feedOutput.innerHTML = '<p class="error">Please enter a valid RSS feed URL.</p>';
+                rawFeedOutput.value = '';
+                copyRawButton.disabled = true;
+                return;
+            }
+
+            try {
+                const response = await fetch('/proxy-rss', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url: urlInput })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    feedOutput.innerHTML = `<p class="error">${data.error}</p>`;
+                    rawFeedOutput.value = '';
+                    copyRawButton.disabled = true;
+                    return;
+                }
+
+                // Display feed title and description
+                let output = `<h2 class="mb-3">${data.title || 'RSS Feed'}</h2>`;
+                if (data.description) {
+                    output += `<p class="text-muted">${data.description}</p>`;
+                }
+
+                // Build plain text for raw feed output
+                let rawText = data.title || 'RSS Feed';
+                if (data.description) {
+                    rawText += `\n\n${data.description}`;
+                }
+                rawText += '\n\n';
+
+                // Display feed items and build raw text
+                output += '<div>';
+                data.items.forEach(item => {
+                    output += `
+                        <div class="feed-item">
+                            <h3><a href="${item.link}" target="_blank" class="text-light">${item.title}</a></h3>
+                            <p class="text-muted"><strong>Published:</strong> ${item.pubDate ? new Date(item.pubDate).toLocaleString() : 'N/A'}</p>
+                            <p class="text-muted"><strong>Creator:</strong> ${item.creator || 'Unknown'}</p>
+                            <div class="text-light">${item.content || 'No content available'}</div>
+                        </div>
+                    `;
+                    rawText += `${item.title}\nPublished: ${item.pubDate ? new Date(item.pubDate).toLocaleString() : 'N/A'}\nCreator: ${item.creator || 'Unknown'}\n${item.content || 'No content available'}\n\n`;
+                });
+                output += '</div>';
+
+                feedOutput.innerHTML = output;
+                rawFeedOutput.value = rawText.trim();
+                copyRawButton.disabled = false; // Enable copy button after successful load
+            } catch (error) {
+                console.error('Error loading feed:', error);
+                feedOutput.innerHTML = `<p class="error">Failed to load RSS feed: ${error.message}</p>`;
+                rawFeedOutput.value = '';
+                copyRawButton.disabled = true;
+            }
+        }
+
+        function copyRawFeed() {
+            const rawFeedOutput = document.getElementById('rawFeedOutput');
+            const copyRawButton = document.getElementById('copyRawButton');
+
+            navigator.clipboard.writeText(rawFeedOutput.value).then(() => {
+                // Temporarily change button text to indicate success
+                copyRawButton.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyRawButton.textContent = 'Copy Raw Feed';
+                }, 2000);
+            }).catch(err => {
+                console.error('Error copying raw feed:', err);
+                alert('Failed to copy raw feed to clipboard');
+            });
+        }
+    </script>
+</body>
+</html>

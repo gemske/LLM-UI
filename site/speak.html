@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Voice Chat Test</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <h1 class="mb-4 text-center">🎤 Speak to LLM</h1>
+
+    <div class="mb-3">
+      <label for="modelSelect" class="form-label">Select Model</label>
+      <select id="modelSelect" class="form-select">
+        <option>Loading...</option>
+      </select>
+    </div>
+
+    <div class="mb-3 text-center">
+      <button id="recordBtn" class="btn btn-primary w-100">🎙️ Start Recording</button>
+    </div>
+
+    <div id="status" class="text-center mb-3 text-muted">Idle</div>
+
+    <audio id="responseAudio" class="w-100 mt-3" controls hidden></audio>
+  </div>
+
+  <script>
+    const recordBtn = document.getElementById("recordBtn");
+    const status = document.getElementById("status");
+    const audioEl = document.getElementById("responseAudio");
+    const modelSelect = document.getElementById("modelSelect");
+
+    let mediaRecorder;
+    let audioChunks = [];
+
+    // Ensure correct base path for API calls
+    const apiBase = `${window.location.origin}`;
+
+    async function fetchModels() {
+      try {
+        const res = await fetch(`${apiBase}/api/models`);
+        const data = await res.json();
+        modelSelect.innerHTML = '';
+        data.models.forEach(m => {
+          const opt = document.createElement("option");
+          opt.value = m.name;
+          opt.textContent = m.name;
+          if (m.name.toLowerCase() === "charlie") opt.selected = true;
+          modelSelect.appendChild(opt);
+        });
+      } catch (e) {
+        console.error('Model load failed:', e);
+        modelSelect.innerHTML = '<option>Error loading models</option>';
+      }
+    }
+
+    fetchModels();
+
+    recordBtn.onclick = async () => {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        alert("getUserMedia is not supported in this browser or over insecure connection.");
+        return;
+      }
+
+      if (!mediaRecorder || mediaRecorder.state === "inactive") {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+
+          mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+          mediaRecorder.onstop = async () => {
+            status.textContent = "Transcribing and generating response...";
+
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.wav');
+            formData.append('model', modelSelect.value);
+
+            try {
+              const response = await fetch(`${apiBase}/upload`, {
+                method: 'POST',
+                body: formData
+              });
+
+              if (!response.ok) throw new Error("Upload failed");
+
+              const { audioUrl } = await response.json();
+              audioEl.src = audioUrl;
+              audioEl.hidden = false;
+              await audioEl.play();
+              status.textContent = "✅ Response received and played.";
+            } catch (err) {
+              console.error(err);
+              status.textContent = "❌ Error processing audio.";
+            }
+          };
+
+          mediaRecorder.start();
+          recordBtn.textContent = "🛑 Stop Recording";
+          status.textContent = "🎙️ Recording...";
+        } catch (err) {
+          console.error("Microphone access denied:", err);
+          alert("Microphone access denied or not available.");
+        }
+      } else {
+        mediaRecorder.stop();
+        recordBtn.textContent = "🎙️ Start Recording";
+      }
+    };
+  </script>
+</body>
+</html>

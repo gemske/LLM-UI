@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raw RSS Feed Display</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            flex: 1;
+        }
+        .feed-item {
+            border-bottom: 1px solid #495057;
+            padding: 15px 0;
+        }
+        .feed-item h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+        .feed-item p {
+            margin-bottom: 0.5rem;
+        }
+        .error {
+            color: #dc3545;
+        }
+        #rawFeedOutput {
+            width: 100%;
+            min-height: 150px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body data-bs-theme="dark">
+  <div style="padding: 20px;" align="left">
+  <button onclick="window.location.href='index.html'">home</button>
+  </div>
+    <div class="container py-4">
+        <h1 class="mb-4">Raw RSS Feed Display</h1>
+        <h4><a href="feedlist.html">feed list</a></h4>
+        <div class="input-group mb-3">
+            <input type="text" id="rssUrl" class="form-control" placeholder="Enter RSS feed URL" aria-label="RSS feed URL">
+            <button class="btn btn-primary" onclick="loadFeed()">Load Feed</button>
+            <button class="btn btn-secondary" onclick="copyRawFeed()" id="copyRawButton" disabled>Copy Raw Feed</button>
+        </div>
+        <div id="feedOutput" class="mt-4"></div>
+        <div class="mt-3">
+            <textarea id="rawFeedOutput" label="rssText" class="form-control" readonly placeholder="Raw feed content will appear here after loading..."></textarea>
+            <button onclick="copyToClipboard()">Copy Text</button>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script>
+        async function loadFeed() {
+            const urlInput = document.getElementById('rssUrl').value;
+            const feedOutput = document.getElementById('feedOutput');
+            const rawFeedOutput = document.getElementById('rawFeedOutput');
+            const copyRawButton = document.getElementById('copyRawButton');
+
+            if (!urlInput) {
+                feedOutput.innerHTML = '<p class="error">Please enter a valid RSS feed URL.</p>';
+                rawFeedOutput.value = '';
+                copyRawButton.disabled = true;
+                return;
+            }
+
+            try {
+                const response = await fetch('/proxy-rss', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url: urlInput })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    feedOutput.innerHTML = `<p class="error">${data.error}</p>`;
+                    rawFeedOutput.value = '';
+                    copyRawButton.disabled = true;
+                    return;
+                }
+
+                // Display feed title and description
+                let output = `<h2 class="mb-3">${data.title || 'RSS Feed'}</h2>`;
+                if (data.description) {
+                    output += `<p class="text-muted">${data.description}</p>`;
+                }
+
+                // Build plain text for raw feed output
+                let rawText = data.title || 'RSS Feed';
+                if (data.description) {
+                    rawText += `\n\n${data.description}`;
+                }
+                rawText += '\n\n';
+
+                // Display feed items and build raw text
+                output += '<div>';
+                data.items.forEach(item => {
+                    output += `
+                        <div class="feed-item">
+                            <h3><a href="${item.link}" target="_blank" class="text-light">${item.title}</a></h3>
+                            <p class="text-muted"><strong>Published:</strong> ${item.pubDate ? new Date(item.pubDate).toLocaleString() : 'N/A'}</p>
+                            <p class="text-muted"><strong>Creator:</strong> ${item.creator || 'Unknown'}</p>
+                            <div class="text-light">${item.content || 'No content available'}</div>
+                        </div>
+                    `;
+                    rawText += `${item.title}\nPublished: ${item.pubDate ? new Date(item.pubDate).toLocaleString() : 'N/A'}\nCreator: ${item.creator || 'Unknown'}\n${item.content || 'No content available'}\n\n`;
+                });
+                output += '</div>';
+
+                feedOutput.innerHTML = output;
+                rawFeedOutput.value = rawText.trim();
+                copyRawButton.disabled = false; // Enable copy button after successful load
+            } catch (error) {
+                console.error('Error loading feed:', error);
+                feedOutput.innerHTML = `<p class="error">Failed to load RSS feed: ${error.message}</p>`;
+                rawFeedOutput.value = '';
+                copyRawButton.disabled = true;
+            }
+        }
+
+        function copyRawFeed() {
+            const rawFeedOutput = document.getElementById('rawFeedOutput');
+            const copyRawButton = document.getElementById('copyRawButton');
+
+            navigator.clipboard.writeText(rawFeedOutput.value).then(() => {
+                // Temporarily change button text to indicate success
+                copyRawButton.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyRawButton.textContent = 'Copy Raw Feed';
+                }, 2000);
+            }).catch(err => {
+                console.error('Error copying raw feed:', err);
+                alert('Failed to copy raw feed to clipboard');
+            });
+        }
+    </script>
+    <script>
+  function copyToClipboard() {
+    const textBox = document.getElementById("rssText");
+    textBox.select();
+    textBox.setSelectionRange(0, 99999); // For mobile devices
+    document.execCommand("copy");
+    alert("Copied: " + textBox.value);
+  }
+</script>
+</body>
+</html>
