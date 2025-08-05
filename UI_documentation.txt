@@ -98,11 +98,8 @@ Print
 
 8. Advanced Interface
 
-    Advanced button (in the controls) takes you to interface.html, where you’ll find:
+    Advanced button (in the controls) takes you to interface.html, where you’ll find a variety of project links.
 
-        RSS Proxy (load and display any RSS feed)
-
-        Audio upload/transcription (upload .wav/.mp3 for ASR)
 
 9. Error Display
 
