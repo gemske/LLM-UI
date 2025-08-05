@@ -147,7 +147,7 @@
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            model: `ALIENTELLIGENCE/${model}:latest`,
+                            model: `${model}:latest`,
                             messages: [{ role: 'user', content: prompt }]
                         })
                     });
@@ -163,7 +163,7 @@
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            model: `ALIENTELLIGENCE/${role}:latest`,
+                            model: `${role}:latest`,
                             messages: [{ role: 'user', content: prompt }]
                         })
                     });
