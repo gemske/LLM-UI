@@ -1,0 +1,131 @@
+Christopher Gemske
+
+# Gemske UI Chat Interface Documentation
+
+Repository location:
+• UI: site/index.html
+• Server: serve.js (or server.js)
+
+1. Accessing the UI
+
+    Start your server (by running node serve.js or node server.js) on https://<HOST>:8081.
+
+    Point your browser at https://<HOST>:8081/ to load the Gemske UI chat interface.
+
+2. Layout Overview
+
+┌─────────────────────────────────────────────────────┐
+│ 👁️                  Gemske UI                   │⚙️ 
+│                                                     │
+│  ┌───────────────────────────────────────────────┐  │
+│  │                                               │  │
+│  │   [Chat history area — AI & your messages]    │  │
+│  │                                               │  │
+│  └───────────────────────────────────────────────┘  │
+│                                                     │
+│  ┌───────────────────────────────────────────────┐  │
+│  │ [Text entry box]   [Send]                     │  │
+│  │                                               │  │
+│  │   (collapsed “⚙️ Controls” panel)             │  │
+│  └───────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────┘
+
+    ⚙️ Controls toggle (top-right)
+
+        Click to expand/collapse the controls panel beneath the message box.
+
+    👁️ Think toggle (top-left)
+
+        Hidden until the AI response contains <think>...</think> bubbles.
+
+        Click to show/hide those “inner thoughts.”
+
+
+3. Sending a Message
+
+    Type your prompt in the “Share your thoughts…” textarea.
+
+    Press Send, or hit Shift + Enter.
+
+    Your message appears on the right; the AI’s reply appears on the left.
+
+4. Model Selection
+
+Within the controls panel:
+
+    Select Model dropdown populates automatically from your Ollama server.
+
+    Defaults to mistral:latest (if available).
+
+    Choose any other listed model before hitting Send to switch back-end.
+
+5. Chat Management
+Save Chat
+
+    Click Save Chat.
+
+    Enter a filename (no extension).
+
+    Conversation is stored as ./chats/yourname.json on the server.
+
+Load Chat
+
+    Choose a file from the Select a chat to load dropdown.
+
+    Click Load Chat to repopulate the chat area with its history.
+
+Clear Chat
+
+    Clear Chat removes all messages from the display (does not delete saved files).
+
+Print
+
+    Print opens the browser’s print dialog for the conversation area.
+
+6. Formatting Controls
+
+    Disable/Enable Formatting
+
+        Toggles whether HTML tags in AI responses are rendered (e.g. lists, bold, links) or shown as raw text.
+
+7. Think Mode
+
+    AI replies can include hidden “thoughts” wrapped in <think>…</think>.
+
+    When any response contains such a tag, the 👁️ button appears.
+
+    Toggle it to show or hide those internal notes.
+
+8. Advanced Interface
+
+    Advanced button (in the controls) takes you to interface.html, where you’ll find:
+
+        RSS Proxy (load and display any RSS feed)
+
+        Audio upload/transcription (upload .wav/.mp3 for ASR)
+
+9. Error Display
+
+    Any API failures (model fetch, chat, save/load errors) are shown in red below the model selector.
+
+10. Tips & Troubleshooting
+
+    No models listed?
+
+        Check your OLLAMA_URL in the server file and that Ollama is running at that address.
+
+    Controls won’t open?
+
+        Ensure the ⚙️ button isn’t overlaid by other elements (try resizing the window).
+
+    Think button never appears?
+
+        Make sure your AI responses include <think>…</think> sections.
+
+File Locations on Server
+
+    Chats: stored in ./chats/
+
+    Uploads (audio): stored in ./uploads/
+
+    SSL certs/keys: in ./ssl/ (for HTTPS)
