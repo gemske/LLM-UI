@@ -5,162 +5,96 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>GemskeAI</title>
 
-  <!-- Tailwind for refinements; no build step -->
+  <!-- Tailwind (only for small typographic helpers – no build step) -->
   <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
 
-  <!-- ─── Dark-mode palette tokens ─── -->
+  <!-- ───────────────  CORE STYLES  ─────────────── -->
   <style>
-    :root{
-      --bg         : #0d0d0d;
-      --surface    : #161616;
-      --surface-alt: #1f1f1f;
-      --primary    : #10b981; /* emerald-500 */
-      --primary-hl : #34d399; /* emerald-400 */
-      --danger     : #dc2626;
-      --danger-hl  : #ef4444;
-      --user-msg   : #2563eb; /* blue-600 */
-      --ai-msg     : #374151; /* slate-700 */
-      --think-bg   : #4b5563; /* slate-600 */
-    }
+     :root{
+       /* palette tokens */
+       --bg:#0d0d0d; --surface:#161616; --surface-alt:#1f1f1f;
+       --primary:#10b981; --primary-hl:#34d399;
+       --danger:#dc2626;  --danger-hl:#ef4444;
+       --user-msg:#2563eb; --ai-msg:#374151; --think-bg:#4b5563;
+       /* UI sizing */
+       --btn-h:2.65rem;   --btn-radius:.5rem;
+     }
 
-    /* ─── Base resets kept from your file ─── */
-    html,body{margin:0;padding:0;height:100%;font-family:system-ui,sans-serif;background:var(--bg);color:#e5e7eb}
-    header{background:var(--surface);padding:1rem;text-align:center;font-size:1rem;font-weight:bold;color:var(--primary-hl);box-shadow:0 1px 0 #000}
-    main{display:flex;flex-direction:column;height:calc(100% - 64px)}
+     /* layout skeleton */
+     html,body{margin:0;height:100%;font-family:system-ui,sans-serif;background:var(--bg);color:#e5e7eb}
+     header{background:var(--surface);padding:1rem;text-align:center;font-weight:700;color:var(--primary-hl);box-shadow:0 1px 0 #000}
+     main{position:fixed;inset:64px 0 0 0;display:flex;flex-direction:column}
 
-    .chat-area{flex:1;overflow-y:auto;padding:1rem}
-    .preserve-format{white-space:pre-wrap;word-wrap:break-word;overflow-wrap:break-word}
-    .content{white-space:pre-wrap;word-wrap:break-word;overflow-wrap:break-word}
+     .chat-area{flex:1;overflow-y:auto;padding:1rem;max-width:100%!important;margin-left:0!important;margin-right:0!important}
 
-    .input-wrapper{border-top:1px solid #262626;background:var(--surface);padding:1rem;display:flex;flex-direction:column;gap:.5rem}
-    .input-controls{max-height:500px;overflow:hidden;transition:max-height .3s ease;display:flex;flex-direction:column;gap:.5rem}
-    .input-controls.collapsed{max-height:0}
+     /* ===== UPDATE 2025‑08‑06: Format toggle baseline ===== */
+     .content{white-space:normal;overflow-wrap:anywhere}
+     /* ===== UPDATE 2025‑08‑06: Format toggle ON state ===== */
+     .chat-area.preserve-format .content{white-space:pre-wrap;overflow-wrap:anywhere}
 
-    .toggle-controls-btn,.toggle-think-btn{position:fixed;background:var(--surface-alt);color:#e5e7eb;border:none;padding:.5rem;border-radius:4px;cursor:pointer;z-index:1000;font-size:1.1rem}
-    .toggle-controls-btn{top:.4rem;right:1rem}
-    .toggle-think-btn{top:.4rem;left:1rem;display:none}
+     /* input section */
+     .input-wrapper{border-top:1px solid #262626;background:var(--surface);padding:0rem;display:flex;flex-direction:column;gap:0rem}
+     .input-controls{max-height:500px;overflow:hidden;transition:max-height .3s ease;display:flex;flex-direction:column;gap:.5rem;order:1}
+     .input-controls.collapsed{max-height:0}
+     .input-bar{display:flex;flex-direction:column;gap:0rem;order:2}
 
-    select,textarea,button{padding:.75rem;font-size:1rem;border:1px solid #303030;border-radius:5px;background:var(--surface-alt);color:#d1d5db}
-    textarea{resize:vertical;min-height:50px}
-    #userInput:focus{height:125%;max-height:60vh;transition:height .2s ease;overflow-y:auto}
-    button{cursor:pointer;transition:background .15s}
+     /* floating toggles */
+     .toggle-controls-btn,.toggle-think-btn{position:fixed;background:var(--surface-alt);border:none;padding:.5rem;border-radius:4px;cursor:pointer;z-index:1000;font-size:1.1rem;color:#e5e7eb}
+     .toggle-controls-btn{top:.4rem;right:1rem}
+     .toggle-think-btn{top:.4rem;left:1rem;display:none}
 
-    #sendButton{background:var(--primary);color:#fff} #sendButton:hover{background:var(--primary-hl)}
-    #saveButton,#loadButton,#printButton{background:#2b2b2b;color:#d1d5db} #saveButton:hover,#loadButton:hover,#printButton:hover{background:#3b3b3b}
-    #clearButton{background:var(--danger);color:#fff} #clearButton:hover{background:var(--danger-hl)}
+     /* form elements */
+     select,textarea,button{padding:.75rem;font-size:1rem;border:1px solid #303030;border-radius:5px;background:var(--surface-alt);color:#d1d5db}
+     textarea{resize:vertical;min-height:50px}
+     #userInput{display:block;width:100%;min-height:var(--btn-h);padding:1.2rem .5rem;line-height:1.4;background:var(--surface-alt);border:1px solid #2e2e2e;border-radius:var(--btn-radius);transition:border-color .18s}
+     #userInput:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px color-mix(in srgb,var(--primary) 40%,transparent)}
+     button{height:var(--btn-h);display:inline-flex;align-items:center;justify-content:center;font-weight:600;gap:.45rem;border-radius:var(--btn-radius);cursor:pointer;transition:background .18s,box-shadow .18s}
 
-    .message{margin-bottom:1rem;padding:.75rem 1rem;border-radius:12px;max-width:90%;clear:both}
-    .user-message{background:var(--user-msg);color:#fff;float:right}
-    .ai-message{background:var(--ai-msg);color:#fff;float:left}
-    .sender{font-size:.75rem;opacity:.7;margin-bottom:.25rem}
+     /* action buttons */
+     #sendButton{background:var(--primary);color:#fff}
+     #sendButton:hover{background:var(--primary-hl)}
+     #sendButton:active{box-shadow:inset 0 1px 3px #0009}
+     #saveButton,#loadButton,#printButton{background:#2b2b2b;color:#d1d5db}
+     #saveButton:hover,#loadButton:hover,#printButton:hover{background:#3b3b3b}
+     #clearButton{background:var(--danger);color:#fff}
+     #clearButton:hover{background:var(--danger-hl)}
+     #toggleFormat,#advancedButton,#models{background:#242424;color:#d1d5db}
+     #toggleFormat:hover,#advancedButton:hover,#models:hover{background:#353535}
+     .input-wrapper div>button{flex:1 1 auto;min-width:110px}
 
-    .think-content{background:var(--think-bg);color:#eee;padding:.5rem;margin-top:.5rem;border-radius:8px}
-    .think-content.hidden{display:none}
+     /* message bubbles */
+     .message{margin-bottom:1rem;padding:.75rem 1rem;border-radius:12px;max-width:90%;clear:both}
+     .user-message{background:var(--user-msg);color:#fff;float:right}
+     .ai-message{background:var(--ai-msg);color:#fff;float:left}
+     .sender{font-size:.75rem;opacity:.7;margin-bottom:.25rem}
+     .think-content{background:var(--think-bg);padding:.5rem;margin-top:.5rem;border-radius:8px;color:#eee}
+     .think-content.hidden{display:none}
+     .typing-indicator{font-style:italic;opacity:.7}
 
-    .typing-indicator{font-style:italic;opacity:.7}
-    .error{color:var(--danger-hl)}
-    .note{color:#9ca3af;font-style:italic;font-size:.85rem}
+     /* toast */
+     #toast{position:fixed;top:76px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;padding:.7rem 1.3rem;border-radius:6px;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .4s;z-index:1500}
+     #toast.show{opacity:.9}
 
-    /* toast */
-    #toast{position:fixed;top:76px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;padding:.7rem 1.3rem;border-radius:6px;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .4s;z-index:1500}
-    #toast.show{opacity:.9}
+     /* mobile tweaks */
+     @media(max-width:768px){.toggle-controls-btn,.toggle-think-btn{padding:.35rem;font-size:1rem}}
+     @media(max-width:600px){
+       .chat-area{padding:.5rem;font-size:.95rem;height:60vh;max-width:100%!important}
+       .input-wrapper{padding:.5rem}
+       select,textarea,button{font-size:.9rem;padding:.6rem}
+       .toggle-controls-btn{top:.6rem;right:.5rem}
+       .toggle-think-btn{top:.6rem;left:.5rem}
+     }
 
-    /* mobile tweaks */
-    @media(max-width:768px){.toggle-controls-btn,.toggle-think-btn{padding:.35rem;font-size:1rem}}
-    @media(max-width:600px){
-      .chat-area{padding:.5rem;font-size:.95rem;height:60vh}
-      .input-wrapper{padding:.5rem}
-      select,textarea,button{font-size:.9rem;padding:.6rem}
-      .toggle-controls-btn{top:.6rem;right:.5rem}
-      .toggle-think-btn{top:.6rem;left:.5rem}
-    }
+     /* inline Send button on wider screens */
+     @media(min-width:769px){
+       .input-bar{flex-direction:row;align-items:flex-start}
+       #userInput{flex:1 1 auto}
+       #sendButton{flex:0 0 auto;height:var(--btn-h);margin-left:.5rem}
+     }
 
-    /* Let prose content fill the screen inside the chat area */
-    #chatBox.prose { max-width: 100% !important; }
-
-    /* === Aesthetic refresh for text-input & buttons ===================== */
-
-    /* shared palette from your tokens */
-    :root{
-      --btn-radius : 0.5rem;
-      --btn-h      : 2.65rem;
-    }
-
-    /* textarea */
-    #userInput{
-      display:block;
-      width:100%;
-      min-height:var(--btn-h);
-      padding:0.9rem 1rem;
-      font-size:0.95rem;
-      line-height:1.4;
-      color:#e5e7eb;
-      background:var(--surface-alt);
-      border:1px solid #2e2e2e;
-      border-radius:var(--btn-radius);
-      transition:border-color .18s;
-    }
-    #userInput:focus{
-      outline:none;
-      border-color:var(--primary);
-      box-shadow:0 0 0 2px color-mix(in srgb, var(--primary) 40%, transparent);
-    }
-
-    /* generic button */
-    button{
-      height:var(--btn-h);
-      padding:0 1.15rem;
-      font-size:0.9rem;
-      font-weight:600;
-      letter-spacing:.02em;
-      border:none;
-      border-radius:var(--btn-radius);
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;   /* ⬅️ NEW: centers text/icon */
-      gap:0.45rem;
-      cursor:pointer;
-      transition:background .18s, box-shadow .18s;
-    }
-
-    /* PRIMARY action (send / business) */
-    #sendButton{
-      background:var(--primary);
-      color:#fff;
-    }
-    #sendButton:hover{background:var(--primary-hl);}
-    #sendButton:active{box-shadow:inset 0 1px 3px #0009;}
-
-    /* UTILITY buttons (save / load / print) */
-    #saveButton,#loadButton,#printButton{
-      background:#2b2b2b;
-      color:#d1d5db;
-    }
-    #saveButton:hover,#loadButton:hover,#printButton:hover{
-      background:#3b3b3b;
-    }
-
-    /* DANGER button (clear) */
-    #clearButton{
-      background:var(--danger);
-      color:#fff;
-    }
-    #clearButton:hover{background:var(--danger-hl);}
-
-    /* neutral small buttons */
-    #toggleFormat,#advancedButton,#models{
-      background:#242424;
-      color:#d1d5db;
-    }
-    #toggleFormat:hover,#advancedButton:hover,#models:hover{
-      background:#353535;
-    }
-
-    /* ensure buttons wrap nicely on small screens */
-    .input-wrapper div>button{flex:1 1 auto;min-width:110px;}
-
-  </style>
-</head>
+     /* hide model dropdown from UI but keep in DOM for logic */
+     #modelSelect,label[for="modelSelect"]{display:none}
+   </style></head>
 
 <body class="h-full">
   <!-- Floating toggles -->
@@ -170,14 +104,12 @@
   <!-- Header -->
   <header>Gemske&nbsp;<span class="text-[color:var(--primary)]">AI</span></header>
 
-  <!-- Main content -->
+  <!-- Main content area -->
   <main>
     <div id="chatBox" class="chat-area preserve-format prose prose-invert"></div>
 
     <div class="input-wrapper">
-      <textarea id="userInput" placeholder="Share your thoughts."></textarea>
-      <button id="sendButton">Send</button>
-
+      <!-- controls (first in visual order) -->
       <div id="controlsContainer" class="input-controls collapsed">
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <button id="saveButton">Save Chat</button>
@@ -191,223 +123,208 @@
 
         <select id="chatFiles"><option value="">Select a chat to load</option></select>
 
-        <label for="modelSelect" style="color:var(--primary-hl);font-size:.9rem">Select Model:</label>
+        <!-- hidden dropdown (logic only) -->
+        <label for="modelSelect">Select Model:</label>
         <select id="modelSelect"></select>
-        <div class="note">Default AI: mistral:latest.</div>
+
+        <!-- live model indicator -->
+        <div id="currentModel" class="note"></div>
+
         <div id="error" class="error"></div>
+      </div>
+
+      <!-- input bar (always at wrapper bottom) -->
+      <div class="input-bar">
+        <textarea id="userInput" placeholder="Share your thoughts."></textarea>
+        <button id="sendButton">Send</button>
       </div>
     </div>
   </main>
 
-  <!-- Toast -->
+  <!-- toast -->
   <div id="toast"></div>
 
-  <!-- ─────────────────────────────────────────────────────
-       EVERYTHING BELOW THIS COMMENT IS EXACTLY THE JS YOU
-       ALREADY HAD.  *Nothing* has been modified.
-  ───────────────────────────────────────────────────── -->
+  <!-- ───────────────  SCRIPT  ─────────────── -->
   <script>
   (()=>{
-    const $ = id => document.getElementById(id);
-    const chatBox   = $('chatBox');
-    const controls  = $('controlsContainer');
-    const toggleBtn = document.querySelector('.toggle-controls-btn');
-    const thinkBtn  = document.querySelector('.toggle-think-btn');
-    const formatBtn = $('toggleFormat');
-    let   chatHistory = [], showThink = false;
 
-    /* — toast helper — */
-    function showToast(msg){
-      const t = $('toast');
-      t.textContent = msg;
-      t.classList.add('show');
-      setTimeout(()=>t.classList.remove('show'),3000);
+    /* shorthand */
+    const $ = id=>document.getElementById(id);
+
+    /* elements */
+    const chatBox=$('chatBox'),
+          controls=$('controlsContainer'),
+          modelSel=$('modelSelect'),
+          currentModel=$('currentModel'),
+          toggleBtn=document.querySelector('.toggle-controls-btn'),
+          thinkBtn=document.querySelector('.toggle-think-btn'),
+          formatBtn=$('toggleFormat');
+
+    /* state */
+    let chatHistory=[], showThink=false;
+
+    /* toast */
+    function toast(msg){
+      const t=$('toast'); t.textContent=msg; t.classList.add('show');
+      setTimeout(()=>t.classList.remove('show'),3e3);
     }
 
-    /* SHIFT-L & SHIFT-R together toggles think bubbles */
-    let leftShift=false,rightShift=false;
+    /* keyboard: Shift L + R toggles think */
+    let lS=false,rS=false;
     document.addEventListener('keydown',e=>{
-      if(e.code==='ShiftLeft') leftShift=true;
-      if(e.code==='ShiftRight') rightShift=true;
-      if(leftShift&&rightShift){thinkBtn.click();leftShift=rightShift=false;}
+      if(e.code==='ShiftLeft') lS=true;
+      if(e.code==='ShiftRight') rS=true;
+      if(lS&&rS){thinkBtn.click();lS=rS=false;}
     });
     document.addEventListener('keyup',e=>{
-      if(e.code==='ShiftLeft') leftShift=false;
-      if(e.code==='ShiftRight') rightShift=false;
+      if(e.code==='ShiftLeft') lS=false;
+      if(e.code==='ShiftRight') rS=false;
     });
 
-    toggleBtn.onclick = ()=>controls.classList.toggle('collapsed');
-
-    thinkBtn.onclick = ()=>{
+    /* UI toggles */
+    toggleBtn.onclick=()=>controls.classList.toggle('collapsed');
+    thinkBtn.onclick=()=>{
       showThink=!showThink;
-      document.querySelectorAll('.think-content')
-              .forEach(el=>el.classList.toggle('hidden',!showThink));
+      document.querySelectorAll('.think-content').forEach(el=>el.classList.toggle('hidden',!showThink));
     };
-
-    formatBtn.onclick = ()=>{
+    formatBtn.onclick=()=>{
       chatBox.classList.toggle('preserve-format');
-      formatBtn.textContent = chatBox.classList.contains('preserve-format')
-        ? 'Disable Formatting' : 'Enable Formatting';
+      formatBtn.textContent=chatBox.classList.contains('preserve-format')?'Disable Formatting':'Enable Formatting';
     };
 
-    /* ---------- BUTTON BINDINGS ---------- */
-    const bind = (id,fn)=>$(id).addEventListener('click',fn);
-    bind('sendButton',sendMessage);
-    bind('saveButton',saveChat);
-    bind('loadButton',loadChat);
-    bind('printButton',printChat);
-    bind('clearButton',clearChat);
-    bind('advancedButton',()=>location.href='interface.html');
-    bind('models',()=>location.href='use.html');
+    /* button helpers */
+    const on=(id,f)=>$(id).addEventListener('click',f);
+    on('sendButton',sendMessage);
+    on('saveButton',saveChat);
+    on('loadButton',loadChat);
+    on('printButton',printChat);
+    on('clearButton',clearChat);
+    on('advancedButton',()=>location.href='interface.html');
+    on('models',()=>location.href='use.html');
 
-    /* Shift+Enter to send */
+    /* Shift+Enter sends */
     $('userInput').addEventListener('keydown',e=>{
       if(e.key==='Enter'&&e.shiftKey){e.preventDefault();sendMessage();}
     });
 
-    /* ---------- MAIN FUNCTIONS ---------- */
+    /* ----------------  MAIN I/O  ---------------- */
     async function sendMessage(){
-      const inp=$('userInput'),txt=inp.value.trim();
-      if(!txt) return;
-      if(window.innerWidth<=600 && !controls.classList.contains('collapsed'))
-          controls.classList.add('collapsed');
+      const input=$('userInput'),text=input.value.trim();
+      if(!text) return;
 
-      const model=$('modelSelect').value;
-      chatHistory.push({role:'user',content:txt});
-      appendMessage('You',txt);
-      inp.value='';$('error').textContent='';
+      /* auto-collapse controls on mobile */
+      if(innerWidth<=600 && !controls.classList.contains('collapsed')) controls.classList.add('collapsed');
 
-      /* typing indicator */
-      const tw=document.createElement('div');
-      tw.className='message ai-message';
-      tw.innerHTML=`<div class="sender">AI</div><div class="typing-indicator">AI is typing…</div>`;
-      chatBox.appendChild(tw);chatBox.scrollTop=chatBox.scrollHeight;
+      chatHistory.push({role:'user',content:text});
+      appendMsg('You',text);
+      input.value=''; $('error').textContent='';
+
+      /* AI typing indicator */
+      const typing=document.createElement('div');
+      typing.className='message ai-message';
+      typing.innerHTML='<div class="sender">AI</div><div class="typing-indicator">AI is typing…</div>';
+      chatBox.appendChild(typing); chatBox.scrollTop=chatBox.scrollHeight;
 
       try{
-        const res=await fetch('/api/chat',{
-          method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({model,messages:chatHistory})
-        });
+        const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
+                          body:JSON.stringify({model:modelSel.value,messages:chatHistory})});
         const data=await res.json();
-        if(data.error){
-          $('error').textContent=data.error;
-        }else{
+        if(data.error){$('error').textContent=data.error;}
+        else{
           chatHistory.push({role:'assistant',content:data.message.content});
-          appendMessage('AI',data.message.content);
+          appendMsg('AI',data.message.content);
         }
-      }catch{$('error').textContent='Network error';}
+      }catch{ $('error').textContent='Network error'; }
     }
 
-    function appendMessage(role,content){
+    function appendMsg(role,content){
       const old=chatBox.querySelector('.typing-indicator');
       if(old?.parentElement) old.parentElement.remove();
 
-      const wrapper=document.createElement('div');
-      wrapper.className='message '+(role==='You'?'user-message':'ai-message');
+      const wrap=document.createElement('div');
+      wrap.className=`message ${role==='You'?'user-message':'ai-message'}`;
 
       const sender=document.createElement('div');
-      sender.className='sender';sender.textContent=role;
-      wrapper.appendChild(sender);
+      sender.className='sender'; sender.textContent=role;
+      wrap.appendChild(sender);
 
+      /* handle <think> fragments */
       let html=content,hasThink=false;
-      if(role==='AI'&&/<think>[\s\S]*?<\/think>/.test(content)){
+      if(role==='AI' && /<think>[\s\S]*?<\/think>/.test(content)){
         hasThink=true;
-        const match=content.match(/<think>([\s\S]*?)<\/think>/)[1];
+        const thinkTxt=content.match(/<think>([\s\S]*?)<\/think>/)[1];
         html=content.replace(/<think>[\s\S]*?<\/think>/,'');
-        wrapper.insertAdjacentHTML('beforeend','<div class="sender">Think</div>');
         const tdiv=document.createElement('div');
-        tdiv.className='think-content'+(showThink?'':' hidden');
-        tdiv.textContent=match;wrapper.appendChild(tdiv);
+        tdiv.className='think-content'+(showThink?'':' hidden'); tdiv.textContent=thinkTxt;
+        wrap.appendChild(tdiv);
       }
 
-      const mdiv=document.createElement('div');
-      mdiv.className='content';mdiv.innerHTML=html;
-      wrapper.appendChild(mdiv);
+      const msg=document.createElement('div');
+      msg.className='content'; msg.innerHTML=html;
+      wrap.appendChild(msg);
 
-      chatBox.appendChild(wrapper);
-      chatBox.scrollTop=chatBox.scrollHeight;
+      chatBox.appendChild(wrap); chatBox.scrollTop=chatBox.scrollHeight;
       if(hasThink) thinkBtn.style.display='block';
     }
 
+    /* ----------------  FILE  ---------------- */
     async function saveChat(){
       const name=prompt('Filename (no extension):','chat-history');
       if(!name) return;
       try{
-        const res=await fetch('/api/save-chat',{
-          method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({messages:chatHistory,filename:name})
-        });
+        const res=await fetch('/api/save-chat',{method:'POST',headers:{'Content-Type':'application/json'},
+                          body:JSON.stringify({messages:chatHistory,filename:name})});
         const {filename,error}=await res.json();
-        if(error) alert('Error: '+error);
-        else{alert(`Saved as ${filename}`);loadChatFiles();}
+        error?alert('Error: '+error):(alert(`Saved as ${filename}`),loadChatFiles());
       }catch{alert('Save failed');}
     }
 
     async function loadChat(){
-      const sel=$('chatFiles'),fn=sel.value;
-      if(!fn) return alert('Choose a chat first');
+      const file=$('chatFiles').value;
+      if(!file) return alert('Choose a chat first');
       try{
-        const res=await fetch(`/api/load-chat/${fn}`);
-        const {messages,error}=await res.json();
-        if(error){alert(error);return;}
-        chatBox.innerHTML='';chatHistory=messages;
-        messages.forEach(m=>appendMessage(m.role==='user'?'You':'AI',m.content));
-        if(!controls.classList.contains('collapsed'))controls.classList.add('collapsed');
+        const res=await fetch(`/api/load-chat/${file}`),
+              {messages,error}=await res.json();
+        if(error) return alert(error);
+        chatHistory=messages; chatBox.innerHTML='';
+        messages.forEach(m=>appendMsg(m.role==='user'?'You':'AI',m.content));
+        controls.classList.add('collapsed');
       }catch{alert('Load failed');}
     }
 
     function printChat(){
       const w=window.open('','','width=800,height=600');
-      w.document.write('<html><head><title>Chat History</title>');
-      w.document.write(`<style>
-        html,body{font-family:system-ui,sans-serif;background:#1e1e1e;color:#eee;padding:1rem}
-        .message{margin-bottom:1rem;padding:.75rem 1rem;border-radius:12px;clear:both}
-        .user-message{background:#2c2c2e;color:#fff}.ai-message{background:#3a3a3c;color:#fff}
-        .sender{font-size:.75rem;opacity:.6;margin-bottom:.25rem}
-        .think-content{background:#444;color:#ccc;padding:.5rem;margin-top:.5rem;border-radius:8px}
-        .think-content.hidden{display:none}.typing-indicator{font-style:italic;opacity:.7}
-      </style>`);
-      w.document.write('</head><body>'+chatBox.innerHTML+'</body></html>');
-      w.document.close();w.focus();w.print();
+      w.document.write('<html><head><title>Chat History</title><style>html,body{font-family:system-ui,sans-serif;background:#1e1e1e;color:#eee;padding:1rem}.message{margin-bottom:1rem;padding:.75rem 1rem;border-radius:12px;clear:both}.user-message{background:#2c2c2e;color:#fff}.ai-message{background:#3a3a3c;color:#fff}.sender{font-size:.75rem;opacity:.6;margin-bottom:.25rem}.think-content{background:#444;color:#ccc;padding:.5rem;margin-top:.5rem;border-radius:8px}.typing-indicator{font-style:italic;opacity:.7}</style></head><body>'+chatBox.innerHTML+'</body></html>');
+      w.document.close(); w.focus(); w.print();
     }
 
-    function clearChat(){
-      if(confirm('Clear?')){chatHistory=[];chatBox.innerHTML='';thinkBtn.style.display='none';}
-    }
+    function clearChat(){ confirm('Clear?') && (chatHistory=[],chatBox.innerHTML='',thinkBtn.style.display='none'); }
 
     async function loadChatFiles(){
-      const sel=$('chatFiles');
-      sel.innerHTML='<option value="">Select a chat to load</option>';
+      const sel=$('chatFiles'); sel.innerHTML='<option value="">Select a chat to load</option>';
       try{
-        const res=await fetch('/api/list-chats');
-        const {files}=await res.json();
+        const {files}=await (await fetch('/api/list-chats')).json();
         files.forEach(f=>sel.add(new Option(f,f)));
-      }catch{}
+      }catch{/* ignore */}
     }
 
-    /* ---------- MODELS ---------- */
+    /* ----------------  MODELS  ---------------- */
     async function loadModels(){
-      const sel=$('modelSelect');
-      sel.innerHTML='';
       try{
-        const res=await fetch('/api/models');
-        const {models}=await res.json();
-        models.forEach(m=>sel.add(new Option(m.name,m.name)));
-
-        /* pick model from query-string if valid */
+        const {models}=await (await fetch('/api/models')).json();
+        modelSel.innerHTML=''; models.forEach(m=>modelSel.add(new Option(m.name,m.name)));
         const qs=new URLSearchParams(location.search).get('model');
-        let chosen='mistral:latest';
-        if(qs && sel.querySelector(`option[value="${qs}"]`)) chosen=qs;
-        if(sel.querySelector(`option[value="${chosen}"]`)) sel.value=chosen;
-
-        showToast(`Model “${sel.value}” loaded`);
-
-        /* toast whenever user changes model manually */
-        sel.addEventListener('change',()=>showToast(`Model “${sel.value}” loaded`));
-      }catch{}
+        modelSel.value=models.some(m=>m.name===qs)?qs:'mistral:latest';
+        currentModel.textContent=`Current model: ${modelSel.value}`;
+        toast(`Model “${modelSel.value}” loaded`);
+        modelSel.addEventListener('change',()=>{
+          currentModel.textContent=`Current model: ${modelSel.value}`;
+          toast(`Model “${modelSel.value}” loaded`);
+        });
+      }catch{/* ignore */}
     }
 
-    /* initial load */
+    /* ----------------  INIT  ---------------- */
     loadModels();
     loadChatFiles();
 
