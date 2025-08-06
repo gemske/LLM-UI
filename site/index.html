@@ -239,6 +239,7 @@
           <button id="printButton">Print</button>
           <button id="toggleFormat">Disable Formatting</button>
           <button id="advancedButton">Advanced</button>
+          <button id="models">Models</button>
         </div>
         <select id="chatFiles">
           <option value="">Select a chat to load</option>
@@ -260,6 +261,22 @@
     const thinkBtn   = document.querySelector('.toggle-think-btn');
     const formatBtn  = $('toggleFormat');
     let chatHistory  = [], showThink = false;
+
+    // SHIFT LEFT + SHIFT RIGHT to toggle think bubbles
+    let leftShiftDown = false;
+    let rightShiftDown = false;
+    document.addEventListener('keydown', e => {
+      if (e.code === 'ShiftLeft')  leftShiftDown  = true;
+      if (e.code === 'ShiftRight') rightShiftDown = true;
+      if (leftShiftDown && rightShiftDown) {
+        thinkBtn.click();
+        leftShiftDown = rightShiftDown = false;
+      }
+    });
+    document.addEventListener('keyup', e => {
+      if (e.code === 'ShiftLeft')  leftShiftDown  = false;
+      if (e.code === 'ShiftRight') rightShiftDown = false;
+    });
 
     // Toggle side controls
     toggleBtn.onclick = ()=> controls.classList.toggle('collapsed');
@@ -287,6 +304,8 @@
     bind('printButton', printChat);
     bind('clearButton', clearChat);
     bind('advancedButton', ()=> location.href='interface.html');
+    bind('models', ()=> location.href='use.html');
+
 
     // Shift+Enter to send
     $('userInput').addEventListener('keydown', e=>{
