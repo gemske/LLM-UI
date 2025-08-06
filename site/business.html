@@ -1,175 +1,55 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Business Research Portal</title>
+  <title>Business AI Research Portal</title>
+
+  <!-- Tailwind (modern, utility-first) -->
+  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+  <!-- Heroicons (for a little flair) -->
+  <script src="https://unpkg.com/heroicons@2.1.1/dist/heroicons.min.js"></script>
+
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f4f4f7;
-      color: #333;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      background: #007bff;
-      color: white;
-      padding: 1rem;
-      text-align: center;
-      font-size: 1.5rem;
-    }
-    main {
-      max-width: 800px;
-      margin: 2rem auto;
-      padding: 2rem;
-      background: white;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      border-radius: 8px;
-    }
-    input[type="text"] {
-      width: 100%;
-      padding: 0.75rem;
-      font-size: 1rem;
-      margin-bottom: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    button {
-      padding: 0.7rem 1.2rem;
-      font-size: 1rem;
-      margin-right: 0.5rem;
-      margin-top: 0.5rem;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    button.primary {
-      background-color: #007bff;
-      color: white;
-    }
-    button.secondary {
-      background-color: #6c757d;
-      color: white;
-    }
-    #status {
-      margin-top: 1rem;
-      font-weight: bold;
-    }
-    pre.output-box {
-      white-space: pre-wrap;
-      background: #f1f1f1;
-      border-left: 4px solid #007bff;
-      padding: 1rem;
-      margin-top: 1rem;
-      border-radius: 4px;
+    /* Frosted-glass backdrop for the main card */
+    .glass {
+      @apply backdrop-blur-md bg-white/5 dark:bg-white/5 border border-white/10 rounded-xl shadow-lg;
     }
   </style>
 </head>
-<body>
-  <header>Business AI Research Portal</header>
-  <main>
-    <label for="businessIdea">Enter your business idea:</label>
-    <input type="text" id="businessIdea" placeholder="e.g., Eco-friendly packaging startup" />
-    <button class="primary" onclick="runResearch()">Start Research</button>
 
-    <div id="status"></div>
-
-    <div id="actions" style="display: none;">
-      <button class="secondary" onclick="showOutput('raw')">View Research</button>
-      <button class="secondary" onclick="showOutput('summary')">View Research Summary</button>
-      <button class="primary" onclick="showOutput('final')">View Business Plan</button>
+<body class="h-full bg-[#0d0d0d] font-sans text-slate-200 antialiased leading-relaxed">
+  <!-- ╔═════════════ Header ═════════════╗ -->
+  <header class="w-full bg-[#161616] border-b border-white/10">
+    <div class="mx-auto max-w-5xl px-4 py-4 flex items-center gap-3">
+      <!-- Brand icon -->
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+              d="M12 3v18m9-9H3" />
+      </svg>
+      <h1 class="text-xl font-semibold tracking-wide">
+        Business&nbsp;<span class="text-indigo-400">AI</span>&nbsp;Research
+      </h1>
     </div>
+  </header>
 
-    <pre id="outputDisplay" class="output-box" style="display:none;"></pre>
-  </main>
+  <!-- ╔═════════════ Main Card ═════════════╗ -->
+  <main class="h-[calc(100%-76px)] flex items-start justify-center overflow-y-auto px-4">
+    <section class="glass w-full max-w-3xl p-8 mt-10">
+      <!-- Input -->
+      <label for="businessIdea" class="block mb-2 text-sm font-medium text-slate-300">
+        Enter your business idea
+      </label>
+      <input id="businessIdea" type="text" autocomplete="off"
+             placeholder="Eco-friendly packaging startup"
+             class="w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-4 py-3 text-slate-200 placeholder:text-slate-500 focus:border-indigo-500 focus:ring-indigo-500 outline-none transition" />
 
-  <script>
-    const TASKS = [
-      "Analyze consumer psychology, motivations, and market appeal of the business idea.",
-      "Simulate user interactions and adoption challenges for this idea.",
-      "Evaluate customer success strategies and retention approaches.",
-      "Assess financial viability, startup costs, revenue projections, and funding strategies.",
-      "Draft a possible MVP or tech implementation strategy.",
-      "Identify potential cybersecurity concerns or data privacy implications.",
-      "Propose a high-level project roadmap with phases and priorities.",
-      "Determine any hardware considerations and feasibility.",
-      "Outline the business structure, roles, operations, and key workflows.",
-      "Discuss legal structure, IP concerns, compliance, and liability mitigation.",
-      "Provide a strategy for AI integration, scalability, and competitive edge."
-    ];
+      <!-- Primary action -->
+      <button class="mt-6 flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 px-6 py-3 text-sm font-semibold shadow transition"
+              onclick="runResearch()">
+        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4l12 6-12 6V4z"/></svg>
+        Start research
+      </button>
 
-    const FINAL_STEPS = {
-      intro: "Give a brief statement introducing the board comprised of customer success, finance, operations, legal, and AI strategy.",
-      market: "Summarize the target market and consumer psychology.",
-      finance: "Summarize the financial aspects, including budget, revenue model, projections, and liabilities.",
-      operations: "Summarize the operational structure and efficiency plan.",
-      legal: "Summarize legal safeguards, liabilities, and protections.",
-      ai: "Summarize long-term AI integration, risks, and opportunities."
-    };
-
-    let rawOutputs = [];
-    let summaries = [];
-    let finalReport = "";
-
-    async function runResearch() {
-      const idea = document.getElementById("businessIdea").value.trim();
-      if (!idea) {
-        alert("Please enter a business idea.");
-        return;
-      }
-
-      rawOutputs = [];
-      summaries = [];
-      finalReport = "";
-      document.getElementById("status").innerText = "Please wait. Running research...";
-      document.getElementById("actions").style.display = "none";
-      document.getElementById("outputDisplay").style.display = "none";
-
-      for (const task of TASKS) {
-        const prompt = `Business idea: ${idea}\n\n${task}`;
-        const result = await askLLM(prompt);
-        rawOutputs.push({ task, output: result });
-
-        const summaryPrompt = `Summarize the following output in concise bullet points (max 5 points):\n${result}`;
-        const summary = await askLLM(summaryPrompt);
-        summaries.push({ task, summary });
-      }
-
-      const transcript = summaries.map(s => `- ${s.task}: ${s.summary}`).join('\n');
-      for (const [role, instruction] of Object.entries(FINAL_STEPS)) {
-        const finalPrompt = `Transcript of summaries:\n${transcript}\n\n${instruction}`;
-        const response = await askLLM(finalPrompt);
-        finalReport += `\n\n[${role.toUpperCase()}]\n${response}`;
-      }
-
-      document.getElementById("status").innerText = "✅ Research complete. View results below.";
-      document.getElementById("actions").style.display = "block";
-    }
-
-    async function askLLM(prompt) {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "wizard_28kmem:latest", messages: [{ role: "user", content: prompt }] })
-      });
-      const data = await res.json();
-      return data.message.content;
-    }
-
-    function showOutput(type) {
-      let output = "";
-      if (type === "raw") {
-        output = rawOutputs.map(r => `[${r.task}]\n${r.output}`).join("\n\n");
-      } else if (type === "summary") {
-        output = summaries.map(s => `[${s.task}]\n${s.summary}`).join("\n\n");
-      } else if (type === "final") {
-        output = finalReport;
-      }
-      const display = document.getElementById("outputDisplay");
-      display.innerText = output;
-      display.style.display = "block";
-    }
-  </script>
-</body>
-</html>
+      <!-- Status -->
+      <p id="status" class="mt-4 text-sm font-medium text-slate-400">

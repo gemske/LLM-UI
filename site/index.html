@@ -1,43 +1,72 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>GemskeAI</title>
+
+  <!-- Tailwind for refinements; no build step -->
+  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+
+  <!-- ─── Dark-mode palette tokens ─── -->
   <style>
-    /* ————— EXISTING STYLES (unchanged) ————— */
-    html,body{margin:0;padding:0;height:100%;font-family:system-ui,sans-serif;background:#1e1e1e;color:#eee}
-    header{background:#111;padding:1rem;text-align:center;font-size:1rem;font-weight:bold;color:#bbffcc}
+    :root{
+      --bg         : #0d0d0d;
+      --surface    : #161616;
+      --surface-alt: #1f1f1f;
+      --primary    : #10b981; /* emerald-500 */
+      --primary-hl : #34d399; /* emerald-400 */
+      --danger     : #dc2626;
+      --danger-hl  : #ef4444;
+      --user-msg   : #2563eb; /* blue-600 */
+      --ai-msg     : #374151; /* slate-700 */
+      --think-bg   : #4b5563; /* slate-600 */
+    }
+
+    /* ─── Base resets kept from your file ─── */
+    html,body{margin:0;padding:0;height:100%;font-family:system-ui,sans-serif;background:var(--bg);color:#e5e7eb}
+    header{background:var(--surface);padding:1rem;text-align:center;font-size:1rem;font-weight:bold;color:var(--primary-hl);box-shadow:0 1px 0 #000}
     main{display:flex;flex-direction:column;height:calc(100% - 64px)}
+
     .chat-area{flex:1;overflow-y:auto;padding:1rem}
     .preserve-format{white-space:pre-wrap;word-wrap:break-word;overflow-wrap:break-word}
     .content{white-space:pre-wrap;word-wrap:break-word;overflow-wrap:break-word}
-    .input-wrapper{border-top:1px solid #333;background:#111;padding:1rem;display:flex;flex-direction:column;gap:.5rem}
+
+    .input-wrapper{border-top:1px solid #262626;background:var(--surface);padding:1rem;display:flex;flex-direction:column;gap:.5rem}
     .input-controls{max-height:500px;overflow:hidden;transition:max-height .3s ease;display:flex;flex-direction:column;gap:.5rem}
     .input-controls.collapsed{max-height:0}
-    .toggle-controls-btn,.toggle-think-btn{position:fixed;background:#111;color:#eee;border:none;padding:.5rem;border-radius:4px;cursor:pointer;z-index:1000}
+
+    .toggle-controls-btn,.toggle-think-btn{position:fixed;background:var(--surface-alt);color:#e5e7eb;border:none;padding:.5rem;border-radius:4px;cursor:pointer;z-index:1000;font-size:1.1rem}
     .toggle-controls-btn{top:.4rem;right:1rem}
     .toggle-think-btn{top:.4rem;left:1rem;display:none}
-    select,textarea,button{padding:.75rem;font-size:1rem;border:1px solid #333;border-radius:5px;background:#2b2b2b;color:#99cc99}
+
+    select,textarea,button{padding:.75rem;font-size:1rem;border:1px solid #303030;border-radius:5px;background:var(--surface-alt);color:#d1d5db}
     textarea{resize:vertical;min-height:50px}
     #userInput:focus{height:125%;max-height:60vh;transition:height .2s ease;overflow-y:auto}
-    button{cursor:pointer}
-    #sendButton{background:#006633;color:#e6e6e6} #sendButton:hover{background:#008844}
-    #saveButton,#loadButton,#printButton{background:#005577;color:#e6e6e6}
-    #saveButton:hover,#loadButton:hover,#printButton:hover{background:#0077aa}
-    #clearButton{background:#cc5555;color:#fff} #clearButton:hover{background:#aa3333}
+    button{cursor:pointer;transition:background .15s}
+
+    #sendButton{background:var(--primary);color:#fff} #sendButton:hover{background:var(--primary-hl)}
+    #saveButton,#loadButton,#printButton{background:#2b2b2b;color:#d1d5db} #saveButton:hover,#loadButton:hover,#printButton:hover{background:#3b3b3b}
+    #clearButton{background:var(--danger);color:#fff} #clearButton:hover{background:var(--danger-hl)}
+
     .message{margin-bottom:1rem;padding:.75rem 1rem;border-radius:12px;max-width:90%;clear:both}
-    .user-message{background:#2c2c2e;color:#fff;float:right}
-    .ai-message{background:#3a3a3c;color:#fff;float:left}
-    .sender{font-size:.75rem;opacity:.6;margin-bottom:.25rem}
-    .think-content{background:#444;color:#ccc;padding:.5rem;margin-top:.5rem;border-radius:8px}
+    .user-message{background:var(--user-msg);color:#fff;float:right}
+    .ai-message{background:var(--ai-msg);color:#fff;float:left}
+    .sender{font-size:.75rem;opacity:.7;margin-bottom:.25rem}
+
+    .think-content{background:var(--think-bg);color:#eee;padding:.5rem;margin-top:.5rem;border-radius:8px}
     .think-content.hidden{display:none}
+
     .typing-indicator{font-style:italic;opacity:.7}
-    .error{color:#cc5555}
-    .note{color:#555;font-style:italic}
-    @media(max-width:768px){
-      .toggle-controls-btn,.toggle-think-btn{padding:.4rem;font-size:.9rem}
-    }
+    .error{color:var(--danger-hl)}
+    .note{color:#9ca3af;font-style:italic;font-size:.85rem}
+
+    /* toast */
+    #toast{position:fixed;top:76px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;padding:.7rem 1.3rem;border-radius:6px;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .4s;z-index:1500}
+    #toast.show{opacity:.9}
+
+    /* mobile tweaks */
+    @media(max-width:768px){.toggle-controls-btn,.toggle-think-btn{padding:.35rem;font-size:1rem}}
     @media(max-width:600px){
       .chat-area{padding:.5rem;font-size:.95rem;height:60vh}
       .input-wrapper{padding:.5rem}
@@ -46,35 +75,104 @@
       .toggle-think-btn{top:.6rem;left:.5rem}
     }
 
-    /* ————— NEW: toast popup ————— */
-    #toast{
-      position:fixed;
+    /* Let prose content fill the screen inside the chat area */
+    #chatBox.prose { max-width: 100% !important; }
 
-      /* --- new placement --- */
-      top:calc(64px + 12px);   /* 64 px = your header height; 12 px gap */
-      left:50%;
-      transform:translateX(-50%);
+    /* === Aesthetic refresh for text-input & buttons ===================== */
 
-      background:rgba(0,0,0,.85);
-      color:#fff;
-      padding:.75rem 1.25rem;
-      border-radius:6px;
-      font-size:.9rem;
-      opacity:0;
-      pointer-events:none;
-      transition:opacity .75s ease;
-      z-index:1500;
+    /* shared palette from your tokens */
+    :root{
+      --btn-radius : 0.5rem;
+      --btn-h      : 2.65rem;
     }
-    #toast.show{opacity:.75}
+
+    /* textarea */
+    #userInput{
+      display:block;
+      width:100%;
+      min-height:var(--btn-h);
+      padding:0.9rem 1rem;
+      font-size:0.95rem;
+      line-height:1.4;
+      color:#e5e7eb;
+      background:var(--surface-alt);
+      border:1px solid #2e2e2e;
+      border-radius:var(--btn-radius);
+      transition:border-color .18s;
+    }
+    #userInput:focus{
+      outline:none;
+      border-color:var(--primary);
+      box-shadow:0 0 0 2px color-mix(in srgb, var(--primary) 40%, transparent);
+    }
+
+    /* generic button */
+    button{
+      height:var(--btn-h);
+      padding:0 1.15rem;
+      font-size:0.9rem;
+      font-weight:600;
+      letter-spacing:.02em;
+      border:none;
+      border-radius:var(--btn-radius);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;   /* ⬅️ NEW: centers text/icon */
+      gap:0.45rem;
+      cursor:pointer;
+      transition:background .18s, box-shadow .18s;
+    }
+
+    /* PRIMARY action (send / business) */
+    #sendButton{
+      background:var(--primary);
+      color:#fff;
+    }
+    #sendButton:hover{background:var(--primary-hl);}
+    #sendButton:active{box-shadow:inset 0 1px 3px #0009;}
+
+    /* UTILITY buttons (save / load / print) */
+    #saveButton,#loadButton,#printButton{
+      background:#2b2b2b;
+      color:#d1d5db;
+    }
+    #saveButton:hover,#loadButton:hover,#printButton:hover{
+      background:#3b3b3b;
+    }
+
+    /* DANGER button (clear) */
+    #clearButton{
+      background:var(--danger);
+      color:#fff;
+    }
+    #clearButton:hover{background:var(--danger-hl);}
+
+    /* neutral small buttons */
+    #toggleFormat,#advancedButton,#models{
+      background:#242424;
+      color:#d1d5db;
+    }
+    #toggleFormat:hover,#advancedButton:hover,#models:hover{
+      background:#353535;
+    }
+
+    /* ensure buttons wrap nicely on small screens */
+    .input-wrapper div>button{flex:1 1 auto;min-width:110px;}
+
   </style>
 </head>
-<body>
+
+<body class="h-full">
+  <!-- Floating toggles -->
   <button class="toggle-think-btn">👁️</button>
   <button class="toggle-controls-btn">⚙️</button>
-  <header>Gemske UI</header>
 
+  <!-- Header -->
+  <header>Gemske&nbsp;<span class="text-[color:var(--primary)]">AI</span></header>
+
+  <!-- Main content -->
   <main>
-    <div id="chatBox" class="chat-area preserve-format"></div>
+    <div id="chatBox" class="chat-area preserve-format prose prose-invert"></div>
 
     <div class="input-wrapper">
       <textarea id="userInput" placeholder="Share your thoughts."></textarea>
@@ -93,7 +191,7 @@
 
         <select id="chatFiles"><option value="">Select a chat to load</option></select>
 
-        <label for="modelSelect" style="color:#99cc99;font-size:.9rem">Select Model:</label>
+        <label for="modelSelect" style="color:var(--primary-hl);font-size:.9rem">Select Model:</label>
         <select id="modelSelect"></select>
         <div class="note">Default AI: mistral:latest.</div>
         <div id="error" class="error"></div>
@@ -101,9 +199,13 @@
     </div>
   </main>
 
-  <!-- NEW toast element -->
+  <!-- Toast -->
   <div id="toast"></div>
 
+  <!-- ─────────────────────────────────────────────────────
+       EVERYTHING BELOW THIS COMMENT IS EXACTLY THE JS YOU
+       ALREADY HAD.  *Nothing* has been modified.
+  ───────────────────────────────────────────────────── -->
   <script>
   (()=>{
     const $ = id => document.getElementById(id);
