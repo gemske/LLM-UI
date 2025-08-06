@@ -1,128 +1,113 @@
-Christopher Gemske
 
-# Gemske UI Chat Interface Documentation
+==============================================================================
+GEMSKE AI – FRONT‑END UI DOCUMENTATION (index.html)      Created: 2025-08-06
+==============================================================================
 
-Repository location:
-• UI: site/index.html
-• Server: zxcvb.js 
+This guide walks you through every interactive element on *index.html*, how it
+talks to the back‑end API, and how the companion pages *use.html* (model
+selector) and *interface.html* (legacy launcher) plug into the same workflow.
 
-1. Accessing the UI
+------------------------------------------------------------------------------
 
-    Start your server (by running: node zxcvb.js) on https://<HOST>:8081.
+1) PAGE LAYOUT
+   ---------------------------------------------------------------------------
+   • Floating Toggles
+     - ⚙️  Opens or closes the control panel.
+     - 👁️  Reveals hidden “think” reasoning, if present.
+   • Header
+     - Fixed brand bar at the top of the viewport.
+   • Chat Area
+     - Streams user/AI messages and keeps model‑returned HTML intact.
+   • Input Wrapper
+     - Text box, Send button, and the collapsible controls panel.
+   • Toast
+     - Small pop‑up used mainly for “Model loaded” notifications.
 
-    Point your browser at https://<HOST>:8081/site/index.html to load the Gemske UI chat interface.
+2) EVERYDAY CHAT WORKFLOW
+   ---------------------------------------------------------------------------
+   A. Pick a Model (also available in models button)
+      • Drop‑down is filled by GET /api/models at page load.
+      • Default model: mistral:latest.
+      • Passing ?model=<name> in the URL auto‑selects that model and shows
+        a toast confirmation.
 
-2. Layout Overview
+   B. Write a Prompt
+      • Press Shift + Enter to send immediately.
+      • Focus enlarges the text box to 125 % of its normal height, without
+        disturbing any other UI element.
 
-┌─────────────────────────────────────────────────────┐
-│ 👁️                  Gemske UI                   │⚙️ 
-│                                                     │
-│  ┌───────────────────────────────────────────────┐  │
-│  │                                               │  │
-│  │   [Chat history area — AI & your messages]    │  │
-│  │                                               │  │
-│  └───────────────────────────────────────────────┘  │
-│                                                     │
-│  ┌───────────────────────────────────────────────┐  │
-│  │ [Text entry box]   [Send]                     │  │
-│  │                                               │  │
-│  │   (collapsed “⚙️ Controls” panel)             │  │
-│  └───────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────┘
+   C. Send
+      • The user message is appended to chat history and displayed.
+      • A placeholder “AI is typing…” remains until POST /api/chat returns.
 
-    ⚙️ Controls toggle (top-right)
+   D. Review “Think” Traces
+      • If the model returns <think>…</think> text, toggle it with the eye
+        button or Shift‑Left + Shift‑Right.
 
-        Click to expand/collapse the controls panel beneath the message box.
+3) CONTROL‑PANEL (⚙️ BUTTON) ACTIONS
+   ---------------------------------------------------------------------------
+   • Save Chat
+     - Sends chat history to POST /api/save-chat with a user‑chosen filename.
+   • Load Chat
+     - Retrieves the list via GET /api/list-chats and loads a file using
+       GET /api/load-chat/:name
+   • Clear Chat
+     - Wipes history in memory and on screen; hides the 👁️ toggle.
+   • Print
+     - Opens a printer‑friendly view, then calls window.print().
+   • Disable / Enable Formatting
+     - Toggles the ‘preserve-format’ class to switch between raw and rich
+       rendering.
+   • Advanced  → interface.html
+   • Models    → use.html
 
-    👁️ Think toggle (top-left)
+   NOTE: On narrow screens the control panel auto‑collapses after sending.
 
-        Hidden until the AI response contains <think>...</think> bubbles.
+4) COMPANION PAGES
+   ---------------------------------------------------------------------------
+   • use.html  – Visual gallery of models.  Clicking a card opens
+                 index.html?model=<id> so the chosen model loads instantly.
+   • interface.html – Legacy multi‑app hub with links to coder, business,
+                 debate, RSS tools, and a simplified chat interface.
 
-        Click to show/hide those “inner thoughts.”
+5) KEYBOARD & MOBILE SHORTCUTS
+   ---------------------------------------------------------------------------
+   • Shift + Enter               – Send message
+   • Shift‑Left + Shift‑Right    – Toggle “think” visibility
+   • Tap ⚙️                       – Show / hide controls
+   • Mobile                       – Controls auto‑collapse after sending;
+                                    buttons wrap under 600 px width.
 
+6) STYLING & THEMING
+   ---------------------------------------------------------------------------
+   • All buttons share a common token‑based style (radius, height) with pure
+     CSS hover/active states.
+   • Media queries trim padding, font size, and toggle placement on screens
+     ≤ 600 px.
+   • The toast element is fixed just below the header for clarity.
 
-3. Sending a Message
+7) EXTENDING THE UI
+   ---------------------------------------------------------------------------
+   • Add new buttons by inserting them inside <div id="controlsContainer">
+     and wiring an event handler in the “BUTTON BINDINGS” section of
+     index.html’s script tag.
+   • Follow existing fetch patterns when adding new API calls.
+   • Theme by overriding CSS variables --bg, --surface, --primary, etc.
+   • Reuse the appendMessage() helper for new message types.
 
-    Type your prompt in the “Share your thoughts…” textarea.
+8) FILE MAP
+   ---------------------------------------------------------------------------
+     /index.html       – Primary chat UI
+     /use.html         – Model selection gallery (opens index with ?model=)
+     /interface.html   – Legacy launcher & fallback chat
+     /assets/          – Icons and server‑stored chat files
 
-    Press Send, or hit Shift + Enter.
+------------------------------------------------------------------------------
 
-    Your message appears on the right; the AI’s reply appears on the left.
+QUICK START
+---------------------------------------------------------------------------
+1. Run the Node/Express server bundled with the project.
+2. Open /use.html, choose a model, and start chatting.
+3. Explore additional tools via Advanced → interface.html.
 
-4. Model Selection
-
-Within the controls panel:
-
-    Select Model dropdown populates automatically from your Ollama server.
-
-    Defaults to mistral:latest (if available).
-
-    Choose any other listed model before hitting Send to switch back-end.
-
-5. Chat Management
-Save Chat
-
-    Click Save Chat.
-
-    Enter a filename (no extension).
-
-    Conversation is stored as ./chats/yourname.json on the server.
-
-Load Chat
-
-    Choose a file from the Select a chat to load dropdown.
-
-    Click Load Chat to repopulate the chat area with its history.
-
-Clear Chat
-
-    Clear Chat removes all messages from the display (does not delete saved files).
-
-Print
-
-    Print opens the browser’s print dialog for the conversation area.
-
-6. Formatting Controls
-
-    Disable/Enable Formatting
-
-        Toggles whether HTML tags in AI responses are rendered (e.g. lists, bold, links) or shown as raw text.
-
-7. Think Mode
-
-    AI replies can include hidden “thoughts” wrapped in <think>…</think>.
-
-    When any response contains such a tag, the 👁️ button appears.
-
-    Toggle it to show or hide those internal notes.
-
-8. Advanced Interface
-
-    Advanced button (in the controls) takes you to interface.html, where you’ll find a variety of project links.
-
-
-9. Error Display
-
-    Any API failures (model fetch, chat, save/load errors) are shown in red below the model selector.
-
-10. Tips & Troubleshooting
-
-    No models listed?
-
-        Check your OLLAMA_URL in the server file and that Ollama is running at that address.
-
-    Controls won’t open?
-
-        Ensure the ⚙️ button isn’t overlaid by other elements (try resizing the window).
-
-    Think button never appears?
-
-        Make sure your AI responses include <think>…</think> sections.
-
-File Locations on Server
-
-    Chats: stored in ./chats/
-
-    Uploads (audio): stored in ./uploads/
-
-    SSL certs/keys: in ./ssl/ (for HTTPS)
+Happy hacking!
