@@ -32,9 +32,9 @@
     .input-controls.collapsed{max-height:0}
     .input-bar{display:flex;flex-direction:column;gap:0}
 
-    .toggle-controls-btn,.toggle-think-btn{position:fixed;background:var(--surface-alt);border:none;padding:.5rem;border-radius:4px;cursor:pointer;z-index:1000;font-size:1.1rem;color:#e5e7eb}
-    .toggle-controls-btn{top:.4rem;right:1rem}
-    .toggle-think-btn{top:.4rem;left:.4rem;display:none}
+    .toggle-controls-btn,
+
+
 
     select,textarea,button{padding:.75rem;font-size:1rem;border:1px solid #303030;border-radius:5px;background:var(--surface-alt);color:#d1d5db}
     textarea{resize:vertical;min-height:50px;transition:min-height .2s ease}
@@ -66,13 +66,33 @@
     #toast{position:fixed;top:76px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;padding:.7rem 1.3rem;border-radius:6px;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .4s;z-index:1500}
     #toast.show{opacity:.9}
 
+
+
+
+
+
+
+
+
+
+    @media (max-width: 600px) {
+
+
+
+
+
+
+
+      #speakSendButton { display: none; }
+    }
+
     @media(max-width:600px){
       .chat-area{padding:.5rem;font-size:.95rem;height:60vh}
       .input-wrapper{padding:.5rem}
       select,textarea,button{font-size:.9rem;padding:.6rem}
       /* On mobile, expand textarea upward by increasing min-height */
       #userInput:focus{min-height:120px}
-      .toggle-controls-btn{top:.6rem;right:.5rem}
+
     }
     @media(min-width:769px){.input-bar{flex-direction:row;align-items:flex-start} #sendButton{margin-left:.5rem}}
     #modelSelect,label[for="modelSelect"]{display:none}
@@ -82,6 +102,26 @@
         /* default min-height is 50px, so this makes it 100px */
         min-height: 150px;
       }
+    }
+
+
+
+
+
+
+
+
+
+
+    @media (max-width: 600px) {
+
+
+
+
+
+
+
+      #speakSendButton { display: none; }
     }
 
     @media(max-width:600px){
@@ -100,9 +140,19 @@
   </style>
 </head>
 <body class="h-full">
-  <button class="toggle-think-btn">👁️</button>
-  <button class="toggle-controls-btn">⚙️</button>
-  <header>Gemske&nbsp;<span class="text-[color:var(--primary)]">AI</span></header>
+  <header class="flex items-center justify-between px-4 py-3 bg-[var(--surface)] shadow text-[color:var(--primary)] font-bold text-lg relative z-10">
+    <div class="flex items-center gap-2">
+      <button class="mobile-mic-btn header-button w-12">🎤</button>
+      <button id="speakButton" class="speak-btn header-button w-12">🔊</button>
+    </div>
+    <div class="text-center flex-grow">Gemske&nbsp;<span class="text-[color:var(--primary)]">AI</span></div>
+    <div class="flex items-center gap-2">
+      <button class="toggle-think-btn header-button w-12">👁️</button>
+      <button class="toggle-controls-btn header-button w-12">⚙️</button>
+    </div>
+  </header>
+
+
   <main>
     <div id="chatBox" class="chat-area preserve-format prose prose-invert"></div>
     <div class="input-wrapper">
@@ -125,9 +175,12 @@
         <div id="currentModel" class="note"></div>
         <div id="error" class="error"></div>
       </div>
-      <div class="input-bar">
-        <textarea id="userInput" placeholder="Share your thoughts."></textarea>
-        <button id="sendButton">Send</button>
+      <div class="input-bar flex flex-col md:flex-row md:items-start gap-2">
+        <textarea id="userInput" placeholder="Share your thoughts." class="flex-1"></textarea>
+        <div class="flex flex-col gap-2 w-full md:w-auto">
+          <button id="sendButton">Send</button>
+          <button id="speakSendButton">🗣️ Speak & Send</button>
+        </div>
       </div>
     </div>
   </main>
@@ -153,8 +206,28 @@
     onClick('printButton', printChat);
     onClick('advancedButton', () => location.href = 'interface.html');
     onClick('models', () => location.href = 'use.html');
-    loadBtn.onclick = () => { controls.classList.remove('collapsed'); loadContainer.style.display = 'flex'; loadChatFiles(); };
-    loadConfirm.onclick = () => { loadChat(); loadContainer.style.display = 'none'; };
+
+    loadBtn.onclick = () => {
+      controls.classList.remove('collapsed');
+      loadContainer.style.display = 'flex';
+      loadChatFiles();
+    };
+
+    loadConfirm.onclick = () => {
+      const file = $('chatFiles').value;
+      if (!file) return alert('Choose a chat first');
+      fetch(`/api/load-chat/${file}`)
+        .then(res => res.json())
+        .then(({ messages, error }) => {
+          if (error) return alert(error);
+          chatHistory = messages;
+          chatBox.innerHTML = '';
+          messages.forEach(m => appendMsg(m.role === 'user' ? 'You' : 'AI', m.content));
+          controls.classList.add('collapsed');
+        })
+        .catch(() => alert('Load failed'));
+    };
+
     function onClick(id, fn) { $(id).addEventListener('click', fn); }
     async function sendMessage() {
       const input = $('userInput'), text = input.value.trim(); if (!text) return;
@@ -170,12 +243,46 @@
     function appendMsg(role, content) {
       const old = chatBox.querySelector('.typing-indicator'); if (old?.parentElement) old.parentElement.remove();
       const wrap = document.createElement('div'); wrap.className = `message ${role==='You'?'user-message':'ai-message'}`;
-      const sender = document.createElement('div'); sender.className = 'sender'; sender.textContent = role; wrap.appendChild(sender);
+
+      const sender = document.createElement('div');
+      sender.className = 'sender';
+
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const dateStr = now.toLocaleDateString();
+      sender.textContent = `${role} • ${dateStr} ${timeStr}`;
+
+      // Add play button for AI messages
+      if (role === 'AI') {
+        const playBtn = document.createElement('button');
+        playBtn.textContent = '🔊';
+        playBtn.style.cssText = 'float: right; background: none; border: none; cursor: pointer; font-size: 1.1rem; color: #fff;';
+        playBtn.title = 'Play this message';
+        playBtn.onclick = () => {
+          const utterance = new SpeechSynthesisUtterance(content.replace(/<[^>]+>/g, ''));
+          utterance.lang = 'en-US';
+          speechSynthesis.cancel();
+          speechSynthesis.speak(utterance);
+        };
+        sender.appendChild(playBtn);
+      }
+
+      wrap.appendChild(sender);
+
+
       let html = content, hasThink = false;
       if (role==='AI' && /<think>[\s\S]*?<\/think>/.test(content)) {
         hasThink = true; const thinkTxt = content.match(/<think>([\s\S]*?)<\/think>/)[1]; html = content.replace(/<think>[\s\S]*?<\/think>/,'');
         const tdiv = document.createElement('div'); tdiv.className = 'think-content' + (showThink?'':' hidden'); tdiv.textContent = thinkTxt; wrap.appendChild(tdiv);
       }
+
+      if (autoSpeakEnabled && role === 'AI') {
+        const utterance = new SpeechSynthesisUtterance(content.replace(/<[^>]+>/g, ''));
+        utterance.lang = 'en-US';
+        speechSynthesis.cancel();
+        speechSynthesis.speak(utterance);
+      }
+
       const msg = document.createElement('div'); msg.className = 'content'; msg.innerHTML = html; wrap.appendChild(msg);
       chatBox.appendChild(wrap); chatBox.scrollTop = chatBox.scrollHeight; if (hasThink) thinkBtn.style.display = 'block';
     }
@@ -185,6 +292,119 @@
     function clearChat() { confirm('Clear?')&&(chatHistory=[],chatBox.innerHTML='',thinkBtn.style.display='none'); }
     async function loadChatFiles() { const sel=$('chatFiles'); sel.innerHTML='<option value="">Select a chat to load</option>'; try { const {files} = await(await fetch('/api/list-chats')).json(); files.forEach(f=>sel.add(new Option(f,f))); } catch {} }
     async function loadModels() { try { const {models} = await (await fetch('/api/models')).json(); modelSel.innerHTML=''; models.forEach(m=>modelSel.add(new Option(m.name,m.name))); const qs=new URLSearchParams(location.search).get('model'); modelSel.value=models.some(m=>m.name===qs)?qs:'mistral:latest'; currentModel.textContent=`Current model: ${modelSel.value}`; toast(`Model “${modelSel.value}” loaded`); modelSel.addEventListener('change',()=>{currentModel.textContent=`Current model: ${modelSel.value}`;toast(`Model “${modelSel.value}” loaded`);}); } catch {} }
+
+    onClick('speakButton', () => {
+      const btn = $('speakButton');
+      const aiMessages = document.querySelectorAll('.ai-message .content');
+      if (!aiMessages.length) return toast('No AI message to speak.');
+
+      const lastMsg = aiMessages[aiMessages.length - 1].textContent;
+      const utterance = new SpeechSynthesisUtterance(lastMsg);
+      utterance.lang = 'en-US';
+
+
+      speechSynthesis.cancel(); // optional, cancel previous
+      speechSynthesis.speak(utterance);
+
+
+
+    });
+
+
+    onClick('speakSendButton', () => {
+      if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+        return toast('Speech recognition not supported in this browser.');
+      }
+
+      const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new Recognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      toast('Listening...');
+
+      recognition.onresult = event => {
+        const transcript = event.results[0][0].transcript;
+        $('userInput').value = transcript;
+        sendMessage();
+      };
+
+      recognition.onerror = event => {
+        console.error('Recognition error:', event.error);
+        toast('Error during speech recognition.');
+      };
+
+      recognition.onend = () => {
+        console.log('Speech recognition ended.');
+      };
+
+      recognition.start();
+    });
+
+
+    document.querySelector('.mobile-mic-btn').addEventListener('click', () => {
+      if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+        return toast('Speech recognition not supported in this browser.');
+      }
+
+      const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new Recognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      toast('Listening...');
+
+      recognition.onresult = event => {
+        const transcript = event.results[0][0].transcript;
+        $('userInput').value = transcript;
+        sendMessage();
+      };
+
+      recognition.onerror = event => {
+        console.error('Recognition error:', event.error);
+        toast('Error during speech recognition.');
+      };
+
+      recognition.start();
+    });
+
+
+    onClick('loadButton', () => {
+      controls.classList.remove('collapsed');
+      loadContainer.style.display = 'flex';
+      loadChatFiles();
+    });
+
+    onClick('loadConfirmButton', () => {
+      const file = $('chatFiles').value;
+      if (!file) return alert('Choose a chat first');
+      fetch(`/api/load-chat/${file}`)
+        .then(res => res.json())
+        .then(({ messages, error }) => {
+          if (error) return alert(error);
+          chatHistory = messages;
+          chatBox.innerHTML = '';
+          messages.forEach(m => appendMsg(m.role === 'user' ? 'You' : 'AI', m.content));
+          controls.classList.add('collapsed');
+        })
+        .catch(() => alert('Load failed'));
+    });
+
+
+    let autoSpeakEnabled = false;
+
+    const speakToggle = document.getElementById('speakButton');
+    speakToggle.addEventListener('click', () => {
+      autoSpeakEnabled = !autoSpeakEnabled;
+
+    speakToggle.style.backgroundColor = autoSpeakEnabled ? 'var(--primary)' : 'var(--surface-alt)';
+    if (!autoSpeakEnabled) speechSynthesis.cancel();
+
+      toast(autoSpeakEnabled ? 'Auto-Speak Enabled' : 'Auto-Speak Disabled');
+    });
+
     loadModels(); loadChatFiles();
   })();
   </script>

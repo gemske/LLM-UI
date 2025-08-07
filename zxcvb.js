@@ -124,6 +124,29 @@ app.use(express.static(__dirname));              // index.html login
 app.use('/site', express.static(path.join(__dirname,'site')));  // chat UI
 app.get('/', (req, res) => res.sendFile(path.join(__dirname,'index.html')));
 
+// New: DuckDuckGo Instant Answer search endpoint
+app.get('/api/search', async (req, res) => {
+  const q = req.query.q;
+  if (!q) return res.status(400).json({ error: 'Missing query parameter `q`' });
+
+  try {
+    const ddg = await axios.get('https://api.duckduckgo.com/', {
+      params: {
+        q,
+        format: 'json',
+        no_redirect: 1,
+        no_html: 1,
+      }
+    });
+
+    // Return the raw JSON — client will format as needed
+    res.json(ddg.data);
+  } catch (err) {
+    console.error('DuckDuckGo search error:', err);
+    res.status(500).json({ error: 'Search failed' });
+  }
+});
+
 // HTTPS server
 https.createServer(sslOptions, app).listen(PORT, HOST, () => {
   console.log(`Server running at https://${HOST}:${PORT}`);
