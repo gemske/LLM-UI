@@ -9,105 +9,85 @@ selector) and *interface.html* (legacy launcher) plug into the same workflow.
 
 ------------------------------------------------------------------------------
 
-1) PAGE LAYOUT
-   ---------------------------------------------------------------------------
-   • Floating Toggles
-     - ⚙️  Opens or closes the control panel.
-     - 👁️  Reveals hidden “think” reasoning, if present.
-   • Header
-     - Fixed brand bar at the top of the viewport.
-   • Chat Area
-     - Streams user/AI messages and keeps model‑returned HTML intact.
-   • Input Wrapper
-     - Text box, Send button, and the collapsible controls panel.
-   • Toast
-     - Small pop‑up used mainly for “Model loaded” notifications.
+PAGE LAYOUT
 
-2) EVERYDAY CHAT WORKFLOW
-   ---------------------------------------------------------------------------
-   A. Pick a Model (also available in models button)
-      • Drop‑down is filled by GET /api/models at page load.
-      • Default model: mistral:latest.
-      • Passing ?model=<name> in the URL auto‑selects that model and shows
-        a toast confirmation.
+• Floating Toggles
 
-   B. Write a Prompt
-      • Press Shift + Enter to send immediately.
-      • Focus enlarges the text box to 125 % of its normal height, without
-        disturbing any other UI element.
+⚙️ Opens or closes the control panel.
+👁️ Reveals hidden “think” reasoning, if present.
+🎤 Toggles voice input mode (activates microphone for speech-to-text).
+🔊 Toggles audio output (enables/disables AI response audio). • Header
 
-   C. Send
-      • The user message is appended to chat history and displayed.
-      • A placeholder “AI is typing…” remains until POST /api/chat returns.
 
-   D. Review “Think” Traces
-      • If the model returns <think>…</think> text, toggle it with the eye
-        button or Shift‑Left + Shift‑Right.
+Streams user/AI messages and keeps model-returned HTML intact. • Input Wrapper
 
-3) CONTROL‑PANEL (⚙️ BUTTON) ACTIONS
-   ---------------------------------------------------------------------------
-   • Save Chat
-     - Sends chat history to POST /api/save-chat with a user‑chosen filename.
-   • Load Chat
-     - Retrieves the list via GET /api/list-chats and loads a file using
-       GET /api/load-chat/:name
-   • Clear Chat
-     - Wipes history in memory and on screen; hides the 👁️ toggle.
-   • Print
-     - Opens a printer‑friendly view, then calls window.print().
-   • Disable / Enable Formatting
-     - Toggles the ‘preserve-format’ class to switch between raw and rich
-       rendering.
-   • Advanced  → interface.html
-   • Models    → use.html
+Text box, Send button, Speak & Send button, and collapsible controls panel. • Modal
 
-   NOTE: On narrow screens the control panel auto‑collapses after sending.
+Pop-up for loading saved chats, triggered by the "Load Chat" button. • Toast
 
-4) COMPANION PAGES
-   ---------------------------------------------------------------------------
-   • use.html  – Visual gallery of models.  Clicking a card opens
-                 index.html?model=<id> so the chosen model loads instantly.
-   • interface.html – Legacy multi‑app hub with links to coder, business,
-                 debate, RSS tools, and a simplified chat interface.
+Small pop-up used mainly for “Model loaded” notifications.
 
-5) KEYBOARD & MOBILE SHORTCUTS
-   ---------------------------------------------------------------------------
-   • Shift + Enter               – Send message
-   • Shift‑Left + Shift‑Right    – Toggle “think” visibility
-   • Tap ⚙️                       – Show / hide controls
-   • Mobile                       – Controls auto‑collapse after sending;
-                                    buttons wrap under 600 px width.
 
-6) STYLING & THEMING
-   ---------------------------------------------------------------------------
-   • All buttons share a common token‑based style (radius, height) with pure
-     CSS hover/active states.
-   • Media queries trim padding, font size, and toggle placement on screens
-     ≤ 600 px.
-   • The toast element is fixed just below the header for clarity.
 
-7) EXTENDING THE UI
-   ---------------------------------------------------------------------------
-   • Add new buttons by inserting them inside <div id="controlsContainer">
-     and wiring an event handler in the “BUTTON BINDINGS” section of
-     index.html’s script tag.
-   • Follow existing fetch patterns when adding new API calls.
-   • Theme by overriding CSS variables --bg, --surface, --primary, etc.
-   • Reuse the appendMessage() helper for new message types.
+EVERYDAY CHAT WORKFLOW
 
-8) FILE MAP
-   ---------------------------------------------------------------------------
-     /index.html       – Primary chat UI
-     /use.html         – Model selection gallery (opens index with ?model=)
-     /interface.html   – Legacy launcher & fallback chat
-     /assets/          – Icons and server‑stored chat files
+A. Pick a Model • Drop-down is filled by GET /api/models at page load. • Default model: mistral:latest. • The "Models" button in the control panel links to use.html, providing an easy-to-use visual gallery for model selection. Alternatively, passing ?model= in the URL auto-selects that model and shows a toast confirmation.
 
-------------------------------------------------------------------------------
+B. Write or Speak a Prompt • Text input: Press Shift + Enter to send immediately. • Voice input: Click 🎤 to enable microphone, then speak the prompt. • Focus enlarges the text box to 125% of its normal height, without disturbing any other UI element.
+
+C. Send • Click "Send" or "Speak & Send" to submit the prompt. • The user message is appended to chat history and displayed. • A placeholder “AI is typing…” remains until POST /api/chat returns. • If 🔊 is enabled, the AI response is read aloud.
+
+D. Review “Think” Traces • If the model returns … text, toggle it with the eye button or Shift-Left + Shift-Right.
+
+
+
+CONTROL-PANEL (⚙️ BUTTON) ACTIONS
+
+• Save Chat: Sends chat history to POST /api/save-chat with a user-chosen filename.
+• Load Chat: Opens a modal with a list of chats retrieved via GET /api/list-chats. Selecting a chat and clicking "OK" loads it using GET /api/load-chat/:name. 
+• Clear Chat: Wipes history in memory and on screen; hides the 👁️ toggle. 
+• Print: Opens a printer-friendly view, then calls window.print(). 
+• Disable / Enable Formatting: Toggles the ‘preserve-format’ class to switch between raw and rich rendering. • Advanced → interface.html • Models → use.html
+
+NOTE: On narrow screens, the control panel auto-collapses after sending.
+
+
+
+COMPANION PAGES
+
+• use.html – Visual gallery of models. Clicking a card opens index.html?model= so the chosen model loads instantly. • interface.html – Legacy multi-app hub with links to coder, business, debate, RSS tools, and a simplified chat interface.
+
+
+
+KEYBOARD & MOBILE SHORTCUTS
+
+• Shift + Enter – Send message • Shift-Left + Shift-Right – Toggle “think” visibility • Tap ⚙️ – Show / hide controls • Tap 🎤 – Enable/disable voice input • Tap 🔊 – Enable/disable audio output • Mobile – Controls auto-collapse after sending; buttons wrap under 600 px width.
+
+
+
+STYLING & THEMING
+
+• All buttons share a common token-based style (radius, height) with pure CSS hover/active states. • Media queries trim padding, font size, and toggle placement on screens ≤ 600 px. • The modal for loading chats is centered with a clean, minimal design. • The toast element is fixed just below the header for clarity.
+
+
+
+EXTENDING THE UI
+
+• Add new buttons by inserting them inside and wiring an event handler in the “BUTTON BINDINGS” section of index.html’s script tag. 
+• Follow existing fetch patterns when adding new API calls. 
+• Theme by overriding CSS variables --bg, --surface, --primary, etc. 
+• Reuse the appendMessage() helper for new message types. 
+• Voice input/output can be extended by modifying the 🎤 and 🔊 toggle logic.
+
+
+
+FILE MAP
+
+/index.html – Primary chat UI /use.html – Model selection gallery (opens index with ?model=) /interface.html – Legacy launcher & fallback chat /assets/ – Icons and server-stored chat files
+
 
 QUICK START
----------------------------------------------------------------------------
-1. Run the Node/Express server bundled with the project.
-2. Open /use.html, choose a model, and start chatting.
-3. Explore additional tools via Advanced → interface.html.
 
-Happy hacking!
+Run the Node/Express server bundled with the project.
+Open /use.html, choose a model, and start chatting.
+Explore additional tools via Advanced → interface.html.
