@@ -34,11 +34,9 @@
 
     .toggle-controls-btn,
 
-
-
     select,textarea,button{padding:.75rem;font-size:1rem;border:1px solid #303030;border-radius:5px;background:var(--surface-alt);color:#d1d5db}
     textarea{resize:vertical;min-height:50px;transition:min-height .2s ease}
-    #userInput{flex:1;padding:1.2rem .5rem;line-height:1.4;background:var(--surface-alt);border:1px solid #2e2e2e;border-radius:var(--btn-radius);transition:border-color .18s}
+    #userInput{flex:1;padding:1.4rem 1rem;line-height:1.1;background:var(--surface-alt);border:1px solid #2e2e2e;border-radius:var(--btn-radius);transition:border-color .18s;height:100%}
     #userInput:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px color-mix(in srgb,var(--primary) 40%,transparent)}
 
     button{height:var(--btn-h);display:inline-flex;align-items:center;justify-content:center;font-weight:600;gap:.45rem;border-radius:var(--btn-radius);cursor:pointer;transition:background .18s,box-shadow .18s}
@@ -51,9 +49,19 @@
     #clearButton:hover{background:var(--danger-hl)}
     #toggleFormat,#advancedButton,#models{background:#242424;color:#d1d5db}
     #toggleFormat:hover,#advancedButton:hover,#models:hover{background:#353535}
-    .input-controls div.button-row{display:flex;gap:0.5rem;flex-wrap:wrap}
 
-    #loadContainer{display:none;gap:0.5rem;align-items:center}
+    .input-controls div.button-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding-top: 5px;
+    }
+    .input-controls div.button-row button {
+      flex: 1 1 auto;
+      min-width: 120px;
+      text-align: center;
+    }
 
     .message{margin-bottom:1rem;padding:.75rem 1rem;border-radius:12px;max-width:90%;clear:both}
     .user-message{background:var(--user-msg);color:#fff;float:right}
@@ -63,80 +71,54 @@
     .think-content.hidden{display:none}
     .typing-indicator{font-style:italic;opacity:.7}
 
+    .note {
+      font-size: 10px;
+      padding-left: 5px;
+      color: white;
+    }
+
     #toast{position:fixed;top:76px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;padding:.7rem 1.3rem;border-radius:6px;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .4s;z-index:1500}
     #toast.show{opacity:.9}
 
-
-
-
-
-
-
-
-
-
-    @media (max-width: 600px) {
-
-
-
-
-
-
-
-      #speakSendButton { display: none; }
+    /* Modal */
+    .modal-backdrop{
+      position:fixed; inset:0; background:rgba(0,0,0,.6);
+      display:none; align-items:center; justify-content:center; z-index:2000;
     }
+    .modal{
+      background:var(--surface); border:1px solid #2a2a2a; border-radius:12px; width:min(640px,95vw);
+      max-height:80vh; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.5);
+    }
+    .modal header{padding:.9rem 1rem; display:flex; align-items:center; justify-content:space-between; color:#e5e7eb}
+    .modal .body{padding:0 1rem 1rem 1rem;}
+    .file-list{list-style:none; padding:0; margin:0; max-height:60vh; overflow:auto}
+    .file-list li{padding:.7rem 0; border-bottom:1px solid #2a2a2a; display:flex; align-items:center; justify-content:space-between; gap:.5rem}
+    .file-name{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+    .file-actions button{height:2.2rem; padding:.35rem .7rem}
+    .modal .footer{padding:1rem; border-top:1px solid #2a2a2a; display:flex; justify-content:flex-end; gap:.5rem}
+
+    @media (max-width: 600px) { #speakSendButton { display: none; } }
 
     @media(max-width:600px){
       .chat-area{padding:.5rem;font-size:.95rem;height:60vh}
       .input-wrapper{padding:.5rem}
       select,textarea,button{font-size:.9rem;padding:.6rem}
-      /* On mobile, expand textarea upward by increasing min-height */
       #userInput:focus{min-height:120px}
-
     }
-    @media(min-width:769px){.input-bar{flex-direction:row;align-items:flex-start} #sendButton{margin-left:.5rem}}
-    #modelSelect,label[for="modelSelect"]{display:none}
+
+    @media(min-width:769px){
+      .input-bar{flex-direction:row;align-items:flex-start}
+      #modelSelect,label[for="modelSelect"]{display:none}
+    }
 
     @media (min-width: 601px) {
-      #userInput:focus {
-        /* default min-height is 50px, so this makes it 100px */
-        min-height: 150px;
-      }
-    }
-
-
-
-
-
-
-
-
-
-
-    @media (max-width: 600px) {
-
-
-
-
-
-
-
-      #speakSendButton { display: none; }
+      #userInput:focus { min-height: 150px; }
     }
 
     @media(max-width:600px){
-      /* default mobile height */
-      #userInput {
-        max-height: 70px;
-      }
-      /* on focus, grow taller */
-      #userInput:focus {
-        min-height: 120px;
-      }
-
-      /* … your other mobile rules … */
+      #userInput { max-height: 70px; }
+      #userInput:focus { min-height: 120px; }
     }
-
   </style>
 </head>
 <body class="h-full">
@@ -151,10 +133,10 @@
       <button class="toggle-controls-btn header-button w-12">⚙️</button>
     </div>
   </header>
-
-
   <main>
     <div id="chatBox" class="chat-area preserve-format prose prose-invert"></div>
+    <div id="currentModel" class="note"></div>
+    <div id="error" class="error"></div>
     <div class="input-wrapper">
       <div id="controlsContainer" class="input-controls collapsed">
         <div class="button-row">
@@ -166,11 +148,10 @@
           <button id="advancedButton">Advanced</button>
           <button id="models">Models</button>
         </div>
-        <div id="loadContainer">
-          <select id="chatFiles"><option value="">Select a chat to load</option></select>
-          <button id="loadConfirmButton">OK</button>
-        </div>
-        <label for="modelSelect">Select Model:</label>
+
+        <!-- removed old #loadContainer (dropdown + OK) -->
+
+
         <select id="modelSelect"></select>
         <div id="currentModel" class="note"></div>
         <div id="error" class="error"></div>
@@ -184,22 +165,46 @@
       </div>
     </div>
   </main>
+
+  <!-- Load Chats Modal -->
+  <div id="loadModalBackdrop" class="modal-backdrop">
+    <div class="modal">
+      <header>
+        <div class="font-semibold">Load Chat</div>
+        <button id="closeLoadModal" title="Close" style="background:#2b2b2b;color:#d1d5db;border:1px solid #333;border-radius:8px;padding:.35rem .6rem;">Close</button>
+      </header>
+      <div class="body">
+        <ul id="fileList" class="file-list"></ul>
+      </div>
+      <div class="footer">
+        <button id="refreshFiles" style="background:#2b2b2b;color:#d1d5db;border:1px solid #333;border-radius:8px;padding:.5rem .9rem;">Refresh</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast"></div>
+
   <script>
   (() => {
     const $ = id => document.getElementById(id);
     const chatBox = $('chatBox'), controls = $('controlsContainer'), modelSel = $('modelSelect'), currentModel = $('currentModel');
     const toggleBtn = document.querySelector('.toggle-controls-btn'), thinkBtn = document.querySelector('.toggle-think-btn');
-    const formatBtn = $('toggleFormat'), loadBtn = $('loadButton'), loadContainer = $('loadContainer'), loadConfirm = $('loadConfirmButton');
+    const formatBtn = $('toggleFormat'), loadBtn = $('loadButton');
     let chatHistory = [], showThink = false;
+
     function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
+
+    // Shift+Shift toggles think view
     let lS = false, rS = false;
     document.addEventListener('keydown', e => { if (e.code === 'ShiftLeft') lS = true; if (e.code === 'ShiftRight') rS = true; if (lS && rS) { thinkBtn.click(); lS = rS = false; } });
     document.addEventListener('keyup', e => { if (e.code === 'ShiftLeft') lS = false; if (e.code === 'ShiftRight') rS = false; });
+
     toggleBtn.onclick = () => controls.classList.toggle('collapsed');
     thinkBtn.onclick = () => { showThink = !showThink; document.querySelectorAll('.think-content').forEach(el => el.classList.toggle('hidden', !showThink)); };
     formatBtn.onclick = () => { chatBox.classList.toggle('preserve-format'); formatBtn.textContent = chatBox.classList.contains('preserve-format') ? 'Disable Formatting' : 'Enable Formatting'; };
+
     $('userInput').addEventListener('keydown', e => { if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); sendMessage(); } });
+
     onClick('sendButton', sendMessage);
     onClick('saveButton', saveChat);
     onClick('clearButton', clearChat);
@@ -207,46 +212,121 @@
     onClick('advancedButton', () => location.href = 'interface.html');
     onClick('models', () => location.href = 'use.html');
 
-    loadBtn.onclick = () => {
-      controls.classList.remove('collapsed');
-      loadContainer.style.display = 'flex';
-      loadChatFiles();
-    };
+    // ===== Load Chat -> open modal and list /api/list-chats immediately
+    const loadModalBackdrop = $('loadModalBackdrop');
+    const fileListEl = $('fileList');
+    const closeLoadModal = $('closeLoadModal');
+    const refreshFiles = $('refreshFiles');
 
-    loadConfirm.onclick = () => {
-      const file = $('chatFiles').value;
-      if (!file) return alert('Choose a chat first');
-      fetch(`/api/load-chat/${file}`)
-        .then(res => res.json())
-        .then(({ messages, error }) => {
-          if (error) return alert(error);
-          chatHistory = messages;
-          chatBox.innerHTML = '';
-          messages.forEach(m => appendMsg(m.role === 'user' ? 'You' : 'AI', m.content));
-          controls.classList.add('collapsed');
-        })
-        .catch(() => alert('Load failed'));
-    };
+    function showLoadModal() { loadModalBackdrop.style.display = 'flex'; }
+    function hideLoadModal() { loadModalBackdrop.style.display = 'none'; }
+
+    async function populateFileList() {
+      fileListEl.innerHTML = '<li style="padding:.8rem 0;opacity:.8">Loading…</li>';
+      try {
+        const res = await fetch('/api/list-chats');
+        const data = await res.json();
+        const files = Array.isArray(data?.files) ? data.files : [];
+        if (!files.length) {
+          fileListEl.innerHTML = '<li style="padding:.8rem 0;opacity:.8">No saved chats found.</li>';
+          return;
+        }
+        fileListEl.innerHTML = '';
+        files.forEach(fname => {
+          const li = document.createElement('li');
+
+          const name = document.createElement('div');
+          name.className = 'file-name';
+          name.textContent = fname;
+
+          const actions = document.createElement('div');
+          actions.className = 'file-actions';
+
+          const loadBtn = document.createElement('button');
+          loadBtn.textContent = 'Load';
+          loadBtn.style.background = 'var(--primary)';
+          loadBtn.style.color = '#fff';
+          loadBtn.style.border = '1px solid #0f8d6e';
+          loadBtn.style.borderRadius = '8px';
+          loadBtn.onclick = () => loadChatFromServer(fname);
+
+          actions.appendChild(loadBtn);
+
+          li.appendChild(name);
+          li.appendChild(actions);
+          fileListEl.appendChild(li);
+        });
+      } catch (e) {
+        console.error(e);
+        fileListEl.innerHTML = '<li style="padding:.8rem 0;color:#f88">Failed to list chats.</li>';
+      }
+    }
+
+    async function loadChatFromServer(file) {
+      try {
+        const res = await fetch(`/api/load-chat/${encodeURIComponent(file)}`);
+        const { messages, error } = await res.json();
+        if (error) return alert(error);
+        if (!Array.isArray(messages)) return alert('Invalid chat file format from server.');
+        chatHistory = messages;
+        chatBox.innerHTML = '';
+        messages.forEach(m => appendMsg(m.role === 'user' ? 'You' : 'AI', m.content));
+        hideLoadModal();
+        // Keep controls state unchanged; do not force-open/toggle
+        toast(`Loaded: ${file}`);
+      } catch {
+        alert('Load failed');
+      }
+    }
+
+    onClick('loadButton', async () => {
+      await populateFileList();
+      showLoadModal();
+    });
+    closeLoadModal.addEventListener('click', hideLoadModal);
+    refreshFiles.addEventListener('click', populateFileList);
+    loadModalBackdrop.addEventListener('click', (e) => { if (e.target === loadModalBackdrop) hideLoadModal(); });
 
     function onClick(id, fn) { $(id).addEventListener('click', fn); }
+
     async function sendMessage() {
       const input = $('userInput'), text = input.value.trim(); if (!text) return;
       if (innerWidth <= 600 && !controls.classList.contains('collapsed')) controls.classList.add('collapsed');
-      chatHistory.push({ role: 'user', content: text }); appendMsg('You', text); input.value = ''; $('error').textContent = '';
-      const typing = document.createElement('div'); typing.className = 'message ai-message'; typing.innerHTML = '<div class="sender">AI</div><div class="typing-indicator">AI is typing…</div>';
+
+      chatHistory.push({ role: 'user', content: text });
+      appendMsg('You', text);
+      input.value = '';
+      $('error').textContent = '';
+
+      const typing = document.createElement('div');
+      typing.className = 'message ai-message';
+      typing.innerHTML = '<div class="sender">AI</div><div class="typing-indicator">AI is typing…</div>';
       chatBox.appendChild(typing); chatBox.scrollTop = chatBox.scrollHeight;
+
       try {
-        const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: modelSel.value, messages: chatHistory }) });
-        const data = await res.json(); if (data.error) { $('error').textContent = data.error; } else { chatHistory.push({ role: 'assistant', content: data.message.content }); appendMsg('AI', data.message.content); }
-      } catch { $('error').textContent = 'Network error'; }
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: modelSel.value, messages: chatHistory })
+        });
+        const data = await res.json();
+        if (data.error) {
+          $('error').textContent = data.error;
+        } else {
+          chatHistory.push({ role: 'assistant', content: data.message.content });
+          appendMsg('AI', data.message.content);
+        }
+      } catch {
+        $('error').textContent = 'Network error';
+      }
     }
+
     function appendMsg(role, content) {
       const old = chatBox.querySelector('.typing-indicator'); if (old?.parentElement) old.parentElement.remove();
       const wrap = document.createElement('div'); wrap.className = `message ${role==='You'?'user-message':'ai-message'}`;
 
       const sender = document.createElement('div');
       sender.className = 'sender';
-
       const now = new Date();
       const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const dateStr = now.toLocaleDateString();
@@ -269,11 +349,15 @@
 
       wrap.appendChild(sender);
 
-
       let html = content, hasThink = false;
       if (role==='AI' && /<think>[\s\S]*?<\/think>/.test(content)) {
-        hasThink = true; const thinkTxt = content.match(/<think>([\s\S]*?)<\/think>/)[1]; html = content.replace(/<think>[\s\S]*?<\/think>/,'');
-        const tdiv = document.createElement('div'); tdiv.className = 'think-content' + (showThink?'':' hidden'); tdiv.textContent = thinkTxt; wrap.appendChild(tdiv);
+        hasThink = true;
+        const thinkTxt = content.match(/<think>([\s\S]*?)<\/think>/)[1];
+        html = content.replace(/<think>[\s\S]*?<\/think>/,'');
+        const tdiv = document.createElement('div');
+        tdiv.className = 'think-content' + (showThink?'':' hidden');
+        tdiv.textContent = thinkTxt;
+        wrap.appendChild(tdiv);
       }
 
       if (autoSpeakEnabled && role === 'AI') {
@@ -286,36 +370,70 @@
       const msg = document.createElement('div'); msg.className = 'content'; msg.innerHTML = html; wrap.appendChild(msg);
       chatBox.appendChild(wrap); chatBox.scrollTop = chatBox.scrollHeight; if (hasThink) thinkBtn.style.display = 'block';
     }
-    async function saveChat() { const name = prompt('Filename (no extension):','chat-history'); if (!name) return; try { const res = await fetch('/api/save-chat',{ method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ messages:chatHistory, filename:name }) }); const { filename,error } = await res.json(); error?alert('Error: '+error):(alert(`Saved as ${filename}`), loadChatFiles()); } catch { alert('Save failed'); } }
-    async function loadChat() { const file = $('chatFiles').value; if (!file) return alert('Choose a chat first'); try { const res = await fetch(`/api/load-chat/${file}`), { messages,error } = await res.json(); if(error) return alert(error); chatHistory=messages; chatBox.innerHTML=''; messages.forEach(m=>appendMsg(m.role==='user'?'You':'AI',m.content)); controls.classList.add('collapsed'); } catch { alert('Load failed'); } }
-    function printChat() { const w = window.open('','','width=800,height=600'); w.document.write(`<html><head><title>Chat History</title><style>html,body{font-family:system-ui,sans-serif;background:#1e1e1e;color:#eee;padding:1rem}.message{margin-bottom:1rem;padding:.75rem 1rem;border-radius:12px;clear:both}.user-message{background:#2c2c2e;color:#fff}.ai-message{background:#3a3a3c;color:#fff}.sender{font-size:.75rem;opacity:.6;margin-bottom:.25rem}.think-content{background:#444;color:#ccc;padding:.5rem;margin-top:.5rem;border-radius:8px}.typing-indicator{font-style:italic;opacity:.7}</style></head><body>${chatBox.innerHTML}</body></html>`); w.document.close(); w.focus(); w.print(); }
-    function clearChat() { confirm('Clear?')&&(chatHistory=[],chatBox.innerHTML='',thinkBtn.style.display='none'); }
-    async function loadChatFiles() { const sel=$('chatFiles'); sel.innerHTML='<option value="">Select a chat to load</option>'; try { const {files} = await(await fetch('/api/list-chats')).json(); files.forEach(f=>sel.add(new Option(f,f))); } catch {} }
-    async function loadModels() { try { const {models} = await (await fetch('/api/models')).json(); modelSel.innerHTML=''; models.forEach(m=>modelSel.add(new Option(m.name,m.name))); const qs=new URLSearchParams(location.search).get('model'); modelSel.value=models.some(m=>m.name===qs)?qs:'mistral:latest'; currentModel.textContent=`Current model: ${modelSel.value}`; toast(`Model “${modelSel.value}” loaded`); modelSel.addEventListener('change',()=>{currentModel.textContent=`Current model: ${modelSel.value}`;toast(`Model “${modelSel.value}” loaded`);}); } catch {} }
+
+    async function saveChat() {
+      const name = prompt('Filename (no extension):','chat-history');
+      if (!name) return;
+      try {
+        const res = await fetch('/api/save-chat',{
+          method:'POST',
+          headers:{ 'Content-Type':'application/json' },
+          body:JSON.stringify({ messages:chatHistory, filename:name })
+        });
+        const { filename,error } = await res.json();
+        if (error) alert('Error: '+error);
+        else alert(`Saved as ${filename}`);
+      } catch {
+        alert('Save failed');
+      }
+    }
+
+    function printChat() {
+      const w = window.open('','','width=800,height=600');
+      w.document.write(`<html><head><title>Chat History</title><style>
+        html,body{font-family:system-ui,sans-serif;background:#1e1e1e;color:#eee;padding:1rem}
+        .message{margin-bottom:1rem;padding:.75rem 1rem;border-radius:12px;clear:both}
+        .user-message{background:#2c2c2e;color:#fff}
+        .ai-message{background:#3a3a3c;color:#fff}
+        .sender{font-size:.75rem;opacity:.6;margin-bottom:.25rem}
+        .think-content{background:#444;color:#ccc;padding:.5rem;margin-top:.5rem;border-radius:8px}
+        .typing-indicator{font-style:italic;opacity:.7}
+      </style></head><body>${chatBox.innerHTML}</body></html>`);
+      w.document.close(); w.focus(); w.print();
+    }
+
+    function clearChat() { if (confirm('Clear?')) { chatHistory=[]; chatBox.innerHTML=''; thinkBtn.style.display='none'; } }
+
+    async function loadModels() {
+      try {
+        const {models} = await (await fetch('/api/models')).json();
+        modelSel.innerHTML='';
+        models.forEach(m=>modelSel.add(new Option(m.name,m.name)));
+        const qs=new URLSearchParams(location.search).get('model');
+        modelSel.value=models.some(m=>m.name===qs)?qs:'mistral:latest';
+        currentModel.textContent=`Current model: ${modelSel.value}`;
+        toast(`Model “${modelSel.value}” loaded`);
+        modelSel.addEventListener('change',()=>{
+          currentModel.textContent=`Current model: ${modelSel.value}`;
+          toast(`Model “${modelSel.value}” loaded`);
+        });
+      } catch {}
+    }
 
     onClick('speakButton', () => {
-      const btn = $('speakButton');
       const aiMessages = document.querySelectorAll('.ai-message .content');
       if (!aiMessages.length) return toast('No AI message to speak.');
-
       const lastMsg = aiMessages[aiMessages.length - 1].textContent;
       const utterance = new SpeechSynthesisUtterance(lastMsg);
       utterance.lang = 'en-US';
-
-
-      speechSynthesis.cancel(); // optional, cancel previous
+      speechSynthesis.cancel();
       speechSynthesis.speak(utterance);
-
-
-
     });
-
 
     onClick('speakSendButton', () => {
       if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
         return toast('Speech recognition not supported in this browser.');
       }
-
       const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const recognition = new Recognition();
       recognition.lang = 'en-US';
@@ -329,19 +447,22 @@
         $('userInput').value = transcript;
         sendMessage();
       };
-
       recognition.onerror = event => {
         console.error('Recognition error:', event.error);
         toast('Error during speech recognition.');
       };
-
-      recognition.onend = () => {
-        console.log('Speech recognition ended.');
-      };
-
+      recognition.onend = () => { console.log('Speech recognition ended.'); };
       recognition.start();
     });
 
+    let autoSpeakEnabled = false;
+    const speakToggle = document.getElementById('speakButton');
+    speakToggle.addEventListener('click', () => {
+      autoSpeakEnabled = !autoSpeakEnabled;
+      speakToggle.style.backgroundColor = autoSpeakEnabled ? 'var(--primary)' : 'var(--surface-alt)';
+      if (!autoSpeakEnabled) speechSynthesis.cancel();
+      toast(autoSpeakEnabled ? 'Auto-Speak Enabled' : 'Auto-Speak Disabled');
+    });
 
     document.querySelector('.mobile-mic-btn').addEventListener('click', () => {
       if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
@@ -370,42 +491,23 @@
       recognition.start();
     });
 
-
-    onClick('loadButton', () => {
-      controls.classList.remove('collapsed');
-      loadContainer.style.display = 'flex';
-      loadChatFiles();
+    // Handle mobile back button to close controls instead of leaving page
+    window.addEventListener('popstate', (event) => {
+      if (!controls.classList.contains('collapsed')) {
+        // If controls are open, close them instead of navigating back
+        controls.classList.add('collapsed');
+        // Push state again so back button doesn't leave immediately
+        history.pushState(null, '', location.href);
+      } else {
+        // If controls are already closed, go back as normal
+        history.back();
+      }
     });
 
-    onClick('loadConfirmButton', () => {
-      const file = $('chatFiles').value;
-      if (!file) return alert('Choose a chat first');
-      fetch(`/api/load-chat/${file}`)
-        .then(res => res.json())
-        .then(({ messages, error }) => {
-          if (error) return alert(error);
-          chatHistory = messages;
-          chatBox.innerHTML = '';
-          messages.forEach(m => appendMsg(m.role === 'user' ? 'You' : 'AI', m.content));
-          controls.classList.add('collapsed');
-        })
-        .catch(() => alert('Load failed'));
-    });
+    // Push initial state so back button can be intercepted
+    history.pushState(null, '', location.href);
 
-
-    let autoSpeakEnabled = false;
-
-    const speakToggle = document.getElementById('speakButton');
-    speakToggle.addEventListener('click', () => {
-      autoSpeakEnabled = !autoSpeakEnabled;
-
-    speakToggle.style.backgroundColor = autoSpeakEnabled ? 'var(--primary)' : 'var(--surface-alt)';
-    if (!autoSpeakEnabled) speechSynthesis.cancel();
-
-      toast(autoSpeakEnabled ? 'Auto-Speak Enabled' : 'Auto-Speak Disabled');
-    });
-
-    loadModels(); loadChatFiles();
+    loadModels();
   })();
   </script>
 </body>
